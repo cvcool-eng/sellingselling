@@ -262,6 +262,11 @@ body.shake canvas#world { animation: shake .45s; }
 .modal .card-desc { font-size: 13px; min-height: 30px; }
 .modal .stats { font-size: 12px; gap: 4px; margin-bottom: 4px; }
 
+/* Cabin: sleeping fade */
+#sleepFade { position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; background: #0b1030; color: #fff; font-size: 44px; opacity: 0; pointer-events: none; transition: opacity .8s ease; }
+#sleepFade.on { opacity: 1; pointer-events: auto; }
+#sleepFade span { animation: bob 2s ease-in-out infinite; }
+
 /* Property window */
 .modal .panel.small-panel { width: min(400px, calc(100vw - 32px)); height: auto; }
 .prop-text { font-size: 18px; margin: 0 0 14px; line-height: 1.3; }

@@ -90,7 +90,7 @@ const CYCLE_S = DAY_S + NIGHT_S, FADE_S = 60; // sunrise / sunset length
 const MERCHANT = window.GAME_DATA.MERCHANT || { chance: 0.1, rods: 2, baits: 2 };
 let clockOffset = 0; // seconds; test hook only
 function clock() {
-  const s = Date.now() / 1000 + clockOffset;
+  const s = Date.now() / 1000 + clockOffset + (S.timeSkip || 0); // timeSkip: nights slept through
   const day = Math.floor(s / CYCLE_S), t = s - day * CYCLE_S;
   return { day, t, isDay: t < DAY_S, left: t < DAY_S ? DAY_S - t : CYCLE_S - t };
 }
@@ -447,8 +447,8 @@ function update(dt) {
     setMoneyText(shownMoney);
   }
   const away = cam < -W * 0.3;
-  navShop.classList.toggle('hidden', away);
-  navDock.classList.toggle('hidden', !away);
+  navShop.classList.toggle('hidden', away || insideCabin);
+  navDock.classList.toggle('hidden', !away || insideCabin);
   updateClock(dt);
 }
 
@@ -489,6 +489,7 @@ function updateClock(dt) {
 //  Drawing
 // ============================================================
 function draw() {
+  if (insideCabin) { drawInterior(); return; }
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
   drawSky();
@@ -803,7 +804,7 @@ function drawProperty() {
     drawCabin(u);
   }
   ctx.restore();
-  if (propHover) bubble(x, y - (owned ? 190 : 124) * K, owned ? 'Your cabin!' : 'Buy this land!');
+  if (propHover) bubble(x, y - (owned ? 190 : 124) * K, owned ? 'Go inside!' : 'Buy this land!');
 }
 
 // The cabin that builds itself on the property once it's bought (log version of the shop).
@@ -858,6 +859,117 @@ function drawCabin(u) {
     ctx.beginPath(); ctx.ellipse(Math.cos(a) * r, 20 * u + Math.sin(a) * 10 * u, 12 * u, 8 * u, 0, 0, Math.PI * 2); ctx.fillStyle = '#e8dcc6'; ctx.fill();
     ctx.globalAlpha = 1;
   }
+}
+
+// ---------- inside the cabin: a cozy room with a bed and a desk ----------
+let insideCabin = false, bedHover = false, deskHover = false;
+function room() {
+  const bottom = H - 110;
+  const R = clamp(Math.min(W / 900, (bottom - 60) / 520), 0.45, 1.4);
+  const cx = W / 2, floorY = bottom - 150 * R;
+  return {
+    R, cx, floorY, bottom,
+    bed: { x: cx - 330 * R, y: floorY + 40 * R, w: 240 * R },
+    desk: { x: cx + 100 * R, y: floorY + 10 * R, w: 210 * R },
+  };
+}
+function hitBed(sx, sy) { const r = room(), b = r.bed; return sx > b.x - 10 * r.R && sx < b.x + b.w + 10 * r.R && sy > b.y - 110 * r.R && sy < b.y + 40 * r.R; }
+function hitDesk(sx, sy) { const r = room(), d = r.desk; return sx > d.x - 50 * r.R && sx < d.x + d.w + 10 * r.R && sy > d.y - 120 * r.R && sy < d.y + 90 * r.R; }
+function drawInterior() {
+  const r = room(), R = r.R, d = world.dark;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  // log back wall
+  const logH = 34 * R;
+  for (let y = 0, i = 0; y < r.floorY; y += logH, i++) { sketch(ctx, rectPts(-10, y, W + 20, logH), true, 0.8 * R, 1000 + i); fillInk(ctx, i % 2 ? '#8b5a2b' : '#a0683a', 2 * R); }
+  // window to the outside (day sky or night with moon and stars)
+  const ww = 150 * R, wh = 110 * R, wx = r.cx - ww / 2, wy = Math.max(40, r.floorY - 330 * R);
+  const sky = ctx.createLinearGradient(0, wy, 0, wy + wh);
+  sky.addColorStop(0, d > 0.5 ? '#1b2550' : '#bfe6ff'); sky.addColorStop(1, d > 0.5 ? '#3a4a8a' : '#fff6dc');
+  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.6 * R, 1020); ctx.fillStyle = sky; ctx.fill();
+  if (d > 0.5) {
+    ctx.fillStyle = '#fdf3c4'; ctx.beginPath(); ctx.arc(wx + ww * 0.72, wy + wh * 0.32, 13 * R, 0, Math.PI * 2); ctx.fill();
+    for (const [sx, sy] of [[.2, .25], [.4, .15], [.3, .55], [.55, .4], [.85, .7]]) { ctx.beginPath(); ctx.arc(wx + ww * sx, wy + wh * sy, 1.6 * R, 0, Math.PI * 2); ctx.fill(); }
+  } else {
+    ctx.fillStyle = '#ffe27a'; ctx.beginPath(); ctx.arc(wx + ww * 0.72, wy + wh * 0.32, 14 * R, 0, Math.PI * 2); ctx.fill(); ink(ctx, 1.6 * R);
+  }
+  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.6 * R, 1020); ink(ctx, 5 * R); ctx.strokeStyle = '#6e4426'; ctx.lineWidth = 3 * R; ctx.stroke();
+  sketch(ctx, [[wx + ww / 2, wy], [wx + ww / 2, wy + wh]], false, 0.3 * R, 1021); ink(ctx, 4 * R);
+  sketch(ctx, [[wx, wy + wh / 2], [wx + ww, wy + wh / 2]], false, 0.3 * R, 1022); ink(ctx, 4 * R);
+  // wooden floor
+  sketch(ctx, rectPts(-10, r.floorY, W + 20, H - r.floorY + 10), true, 0.8 * R, 1030); fillInk(ctx, '#c99a62', 3 * R);
+  for (let x = 30 * R, i = 0; x < W; x += 70 * R, i++) { sketch(ctx, [[x, r.floorY + 4], [x - 20 * R, H]], false, 0.4 * R, 1031 + i); ink(ctx, 1.4 * R, 0.3); }
+  // rug
+  sketch(ctx, ellipsePts(r.cx, r.floorY + 80 * R, 170 * R, 36 * R, 30), true, 0.6 * R, 1040); fillInk(ctx, '#d9534f', 2.6 * R);
+  sketch(ctx, ellipsePts(r.cx, r.floorY + 80 * R, 130 * R, 24 * R, 26), true, 0.4 * R, 1041); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * R; ctx.stroke();
+
+  // bed
+  const b = r.bed, bh = 44 * R;
+  sketch(ctx, rectPts(b.x - 6 * R, b.y - 100 * R, 26 * R, 130 * R), true, 0.6 * R, 1050); fillInk(ctx, '#7a4a24', 2.8 * R);
+  sketch(ctx, rectPts(b.x, b.y - 10 * R, b.w, bh), true, 0.6 * R, 1051); fillInk(ctx, '#8b5a2b', 2.8 * R);
+  for (const lx of [b.x + 8 * R, b.x + b.w - 16 * R]) { sketch(ctx, rectPts(lx, b.y + bh - 12 * R, 10 * R, 18 * R), true, 0.3 * R, 1052 + lx); fillInk(ctx, '#6e4426', 2 * R); }
+  sketch(ctx, rectPts(b.x + 14 * R, b.y - 40 * R, b.w - 20 * R, 32 * R), true, 0.6 * R, 1053); fillInk(ctx, '#fff', 2.6 * R);
+  const blanket = [[b.x + 74 * R, b.y - 44 * R], [b.x + b.w - 2 * R, b.y - 44 * R], [b.x + b.w + 4 * R, b.y + 14 * R], [b.x + 70 * R, b.y + 14 * R]];
+  sketch(ctx, blanket, true, 0.6 * R, 1054); fillInk(ctx, '#4aa3df', 2.6 * R);
+  ctx.save(); sketch(ctx, blanket, true, 0.6 * R, 1054); ctx.clip();
+  for (let x = b.x + 90 * R; x < b.x + b.w; x += 28 * R) { ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(x, b.y - 50 * R, 12 * R, 70 * R); }
+  ctx.restore();
+  sketch(ctx, ellipsePts(b.x + 44 * R, b.y - 46 * R, 30 * R, 15 * R, 18), true, 0.4 * R, 1055); fillInk(ctx, '#fffaf0', 2.4 * R);
+  // desk + chair + lamp + journal
+  const dk = r.desk;
+  sketch(ctx, rectPts(dk.x - 46 * R, dk.y - 30 * R, 36 * R, 6 * R), true, 0.3 * R, 1060); fillInk(ctx, '#a0683a', 2 * R);
+  sketch(ctx, rectPts(dk.x - 46 * R, dk.y - 80 * R, 6 * R, 110 * R), true, 0.3 * R, 1061); fillInk(ctx, '#8b5a2b', 2 * R);
+  sketch(ctx, rectPts(dk.x - 16 * R, dk.y - 24 * R, 6 * R, 54 * R), true, 0.3 * R, 1062); fillInk(ctx, '#8b5a2b', 2 * R);
+  sketch(ctx, rectPts(dk.x, dk.y - 20 * R, dk.w, 16 * R), true, 0.5 * R, 1063); fillInk(ctx, '#a0683a', 2.8 * R);
+  for (const lx of [dk.x + 8 * R, dk.x + dk.w - 18 * R]) { sketch(ctx, rectPts(lx, dk.y - 4 * R, 10 * R, 76 * R), true, 0.3 * R, 1064 + lx); fillInk(ctx, '#8b5a2b', 2.2 * R); }
+  sketch(ctx, rectPts(dk.x + dk.w - 90 * R, dk.y - 4 * R, 70 * R, 34 * R), true, 0.4 * R, 1066); fillInk(ctx, '#b77a43', 2.2 * R);
+  ctx.beginPath(); ctx.arc(dk.x + dk.w - 55 * R, dk.y + 13 * R, 3 * R, 0, Math.PI * 2); ctx.fillStyle = '#f2c94c'; ctx.fill(); ink(ctx, 1.2 * R);
+  // journal (open book) on the desk
+  sketch(ctx, [[dk.x + 30 * R, dk.y - 24 * R], [dk.x + 62 * R, dk.y - 30 * R], [dk.x + 94 * R, dk.y - 24 * R], [dk.x + 94 * R, dk.y - 20 * R], [dk.x + 30 * R, dk.y - 20 * R]], true, 0.3 * R, 1067); fillInk(ctx, '#fffaf0', 2 * R);
+  sketch(ctx, [[dk.x + 62 * R, dk.y - 30 * R], [dk.x + 62 * R, dk.y - 20 * R]], false, 0.2 * R, 1068); ink(ctx, 1.4 * R);
+  // lamp
+  const lx = dk.x + dk.w - 34 * R;
+  sketch(ctx, [[lx, dk.y - 20 * R], [lx, dk.y - 70 * R]], false, 0.3 * R, 1069); ink(ctx, 3 * R);
+  sketch(ctx, [[lx - 22 * R, dk.y - 66 * R], [lx + 22 * R, dk.y - 66 * R], [lx + 12 * R, dk.y - 94 * R], [lx - 12 * R, dk.y - 94 * R]], true, 0.4 * R, 1070); fillInk(ctx, '#ffd166', 2.4 * R);
+  // the cube, at home on the rug
+  const cs = 58 * R, cy = r.floorY + 76 * R + Math.sin(time * 2) * 2 * R;
+  sketch(ctx, rectPts(r.cx - cs / 2, cy - cs, cs, cs), true, 0.8 * R, 1080); fillInk(ctx, '#fff', 3 * R);
+  ctx.fillStyle = INK;
+  ctx.beginPath(); ctx.ellipse(r.cx - cs * 0.18, cy - cs * 0.62, 3 * R, 4.6 * R, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(r.cx + cs * 0.18, cy - cs * 0.62, 3 * R, 4.6 * R, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(r.cx, cy - cs * 0.42, cs * 0.18, 0.15 * Math.PI, 0.85 * Math.PI); ink(ctx, 2.6 * R);
+
+  // night: darker room, warm lamp light
+  if (d > 0.001) {
+    ctx.save(); ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgb(${Math.round(lerp(255, 110, d))},${Math.round(lerp(255, 110, d))},${Math.round(lerp(255, 170, d))})`; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; glowAt(lx, dk.y - 70 * R, 170 * R, '255,200,110', 0.5 * d); ctx.restore();
+  }
+  if (bedHover) bubble(b.x + b.w / 2, b.y - 130 * R, 'Sleep');
+  if (deskHover) bubble(dk.x + dk.w / 2, dk.y - 130 * R, 'Fishing Journal');
+}
+const leaveBtn = document.getElementById('leaveCabin'), sleepFade = document.getElementById('sleepFade');
+function enterCabin() { insideCabin = true; leaveBtn.classList.remove('hidden'); }
+function leaveCabin() { insideCabin = false; bedHover = deskHover = false; leaveBtn.classList.add('hidden'); }
+leaveBtn.addEventListener('click', leaveCabin);
+// Bed: at night, sleep straight through to the next sunrise (a new morning = a new
+// chance for the traveling merchant). Skipped time is saved per player.
+let sleeping = false;
+function goToSleep() {
+  const ck = clock();
+  if (ck.isDay) { toast("It's still daytime. You can sleep once it gets dark."); return; }
+  if (sleeping) return;
+  sleeping = true;
+  sleepFade.classList.add('on');
+  // wake up just after sunrise, once it's light out
+  setTimeout(() => { const c2 = clock(); if (!c2.isDay) { S.timeSkip = (S.timeSkip || 0) + c2.left + FADE_S + 1; save(); } }, 900);
+  setTimeout(() => { sleepFade.classList.remove('on'); sleeping = false; toast('Good morning! You slept through the night.'); }, 2100);
+}
+function openJournal() {
+  openBag();
+  const sec = bagBody.querySelector('.section');
+  if (sec) bagBody.scrollTop = sec.offsetTop - bagBody.offsetTop;
 }
 
 // ---------- traveling merchant's mini shop (just left of the main shop) ----------
@@ -1544,10 +1656,8 @@ function handleGearButton(t) {
 // ---------- Property ----------
 const propertyEl = $('#property'), propertyBody = $('#propertyBody');
 function openProperty() {
-  if (S.property) {
-    propertyBody.innerHTML = `<p class="prop-text">This is your land, and your cabin is built! Nice place by the shop.</p>
-      <div class="prop-row"><button class="btn sketch btn-equip" data-close>Close</button></div>`;
-  } else {
+  if (S.property) { if (cabinRise() >= 1) enterCabin(); return; } // your cabin: go inside
+  {
     const can = S.money >= PROPERTY_PRICE;
     propertyBody.innerHTML = `<p class="prop-text">A plot of land right next to the shop. Buy it and a cozy cabin gets built on it.</p>
       <div class="prop-price">${COIN()} ${fmt(PROPERTY_PRICE)}</div>
@@ -1653,6 +1763,11 @@ cv.addEventListener('pointerdown', e => {
   try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
 });
 cv.addEventListener('pointermove', e => {
+  if (insideCabin) {
+    bedHover = hitBed(e.clientX, e.clientY); deskHover = hitDesk(e.clientX, e.clientY);
+    cv.style.cursor = (bedHover || deskHover) ? 'pointer' : 'default';
+    return;
+  }
   if (ptr) {
     const dx = e.clientX - ptr.x;
     if (Math.abs(dx) > 8) ptr.moved = true;
@@ -1664,6 +1779,11 @@ cv.addEventListener('pointermove', e => {
   cv.style.cursor = (cubeHover || shopHover || merchantHover || propHover) ? 'pointer' : (ptr && ptr.moved ? 'grabbing' : 'default');
 });
 cv.addEventListener('pointerup', e => {
+  if (insideCabin) {
+    if (hitBed(e.clientX, e.clientY)) goToSleep();
+    else if (hitDesk(e.clientX, e.clientY)) openJournal();
+    ptr = null; return;
+  }
   if (ptr && !ptr.moved) {
     const wx = e.clientX + cam, wy = e.clientY;
     if (hitCube(wx, wy)) startFishing();
@@ -1676,7 +1796,7 @@ cv.addEventListener('pointerup', e => {
 cv.addEventListener('pointercancel', () => { ptr = null; });
 cv.addEventListener('pointerleave', () => { shopHover = cubeHover = merchantHover = propHover = false; });
 window.addEventListener('wheel', e => {
-  if (modalOpen || revealOpen) return;
+  if (modalOpen || revealOpen || insideCabin) return;
   e.preventDefault();
   camTarget = clampCam(camTarget + e.deltaX - e.deltaY);
 }, { passive: false });
@@ -1693,7 +1813,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'Escape' && modalOpen) closeModal(modalOpen);
   if (e.code === 'Space' || e.key === 'Enter') {
     if (revealOpen) { e.preventDefault(); closeReveal(); }
-    else if (!modalOpen && e.code === 'Space') { e.preventDefault(); startFishing(); }
+    else if (!modalOpen && !insideCabin && e.code === 'Space') { e.preventDefault(); startFishing(); }
   }
 });
 window.addEventListener('resize', resize);
