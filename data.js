@@ -9,7 +9,8 @@ window.GAME_DATA = {
   STACK_MAX: 20,
 
   // Rod merging at the cabin table: merged luck = luck A + luck B - luckPenalty
-  // (never lower than the better of the two). fee = coins per merge.
+  // (never lower than the better of the two); speed boosts add up with no penalty
+  // (capped so bites are never faster than 0.15x the wait). fee = coins per merge.
   MERGE: { fee: 100000, luckPenalty: 3.0 },
 
   // The plot of land for sale next to the shop.

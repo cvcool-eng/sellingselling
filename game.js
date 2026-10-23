@@ -1715,7 +1715,8 @@ function mergedRod(a, b) {
   const luck = Math.max(a.luck + b.luck - MERGE.luckPenalty, a.luck, b.luck);
   return {
     id: 'merged_' + Date.now().toString(36), name: `${shortName(a)}-${shortName(b)} Rod`, price: 0,
-    luck: Math.round(luck * 100) / 100, speed: Math.max(0.15, Math.round(Math.min(a.speed, b.speed) * 0.95 * 100) / 100),
+    // speed boosts add together with no penalty: 2.3x + 2.6x faster -> (1.3 + 1.6) extra -> 3.9x faster
+    luck: Math.round(luck * 100) / 100, speed: Math.max(0.15, Math.round(100 / (1 + (1 / a.speed - 1) + (1 / b.speed - 1))) / 100),
     colors: [a.colors[0], b.colors[1]], grip: a.grip, accent: b.accent, sparkle: true, merged: true,
     desc: `Merged from the ${a.name} and the ${b.name}.`,
   };
@@ -1724,7 +1725,7 @@ function openMerge() { mergePick = []; renderMerge(); openModal(mergeEl); setMon
 function renderMerge() {
   const list = mergeCandidates();
   mergePick = mergePick.filter(id => list.some(r => r.id === id));
-  let html = `<p class="tab-intro">Pick two rods to fuse into one. Luck adds up, minus ${Math.round(MERGE.luckPenalty * 100)}%. Both rods are used up.</p>`;
+  let html = `<p class="tab-intro">Pick two rods to fuse into one. Luck adds up, minus ${Math.round(MERGE.luckPenalty * 100)}%. Speed adds up fully. Both rods are used up.</p>`;
   if (list.length < 2) {
     html += `<div class="empty-note">You need at least 2 rods (not counting the Basic Rod) to merge. Buy more at the shop!</div>`;
   } else {
