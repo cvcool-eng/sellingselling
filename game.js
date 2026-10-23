@@ -864,25 +864,26 @@ function drawCabin(u) {
 
 // ---------- inside the cabin: a cozy room with a bed and a desk ----------
 let insideCabin = false, bedHover = false, deskHover = false;
-// Stardew-style room: seen from above at an angle, filling most of the screen,
-// with a log back wall (window + framed photos) and a plank floor.
+// Stardew-style room drawn in perspective so it reads as 3D: a back wall, side walls
+// angling in, and a floor that widens toward you. Darker wood; the door is on the right.
 function room() {
   const avail = H - 110;
-  const R = clamp(Math.min((W - 24) / 820, (avail - 24) / 560), 0.4, 1.5);
-  const rw = 820 * R, rh = 560 * R, x = (W - rw) / 2, y = Math.max(12, (avail - rh) / 2);
-  const wallH = 170 * R, floorTop = y + wallH;
+  const R = clamp(Math.min((W - 24) / 860, (avail - 24) / 580), 0.4, 1.5);
+  const rw = 860 * R, rh = 580 * R, x = (W - rw) / 2, y = Math.max(12, (avail - rh) / 2);
+  const inset = 80 * R, wallH = 190 * R, floorTop = y + wallH;
   return {
-    R, x, y, rw, rh, wallH, floorTop, cx: x + rw / 2,
-    bed: { x: x + 40 * R, y: floorTop - 16 * R, w: 170 * R, h: 250 * R },
-    desk: { x: x + rw - 290 * R, y: floorTop + 6 * R, w: 230 * R, h: 96 * R },
+    R, x, y, rw, rh, inset, wallH, floorTop,
+    bx: x + inset, bw: rw - inset * 2, cx: x + rw / 2,
+    bed: { x: x + inset + 24 * R, y: floorTop - 30 * R, w: 180 * R, d: 240 * R },
+    desk: { x: x + rw - inset - 270 * R, y: floorTop - 10 * R, w: 230 * R, d: 70 * R, h: 44 * R },
   };
 }
-function hitBed(sx, sy) { const r = room(), b = r.bed; return sx > b.x && sx < b.x + b.w && sy > b.y - 40 * r.R && sy < b.y + b.h; }
-function hitDesk(sx, sy) { const r = room(), d = r.desk; return sx > d.x - 10 * r.R && sx < d.x + d.w + 10 * r.R && sy > d.y - 70 * r.R && sy < d.y + d.h + 40 * r.R; }
+function hitBed(sx, sy) { const r = room(), b = r.bed; return sx > b.x - 10 * r.R && sx < b.x + b.w + 10 * r.R && sy > b.y - 50 * r.R && sy < b.y + b.d + 40 * r.R; }
+function hitDesk(sx, sy) { const r = room(), d = r.desk; return sx > d.x - 10 * r.R && sx < d.x + d.w + 10 * r.R && sy > d.y - 50 * r.R && sy < d.y + d.d + d.h + 50 * r.R; }
 
 // a little framed photo of the cube out fishing (variant picks the scene)
 function drawPhoto(px, py, pw, ph, variant, R) {
-  sketch(ctx, rectPts(px - 5 * R, py - 5 * R, pw + 10 * R, ph + 10 * R), true, 0.4 * R, 1100 + variant); fillInk(ctx, '#e0b06a', 2.4 * R);
+  sketch(ctx, rectPts(px - 5 * R, py - 5 * R, pw + 10 * R, ph + 10 * R), true, 0.4 * R, 1100 + variant); fillInk(ctx, '#c9924a', 2.4 * R);
   ctx.save(); ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
   const sky = variant === 2 ? ['#ffb37a', '#ffd9a8'] : ['#bfe6ff', '#fff6dc'];
   const g = ctx.createLinearGradient(0, py, 0, py + ph); g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
@@ -890,14 +891,12 @@ function drawPhoto(px, py, pw, ph, variant, R) {
   if (variant === 2) { ctx.fillStyle = '#ffdf6e'; ctx.beginPath(); ctx.arc(px + pw * 0.72, py + ph * 0.55, ph * 0.18, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = '#5aa7e6'; ctx.fillRect(px, py + ph * 0.62, pw, ph * 0.38);
   ctx.fillStyle = '#b77a43'; ctx.fillRect(px, py + ph * 0.58, pw * 0.45, ph * 0.07);
-  // tiny cube
   const cs = ph * 0.26, cx = px + pw * 0.28, cb = py + ph * 0.58;
   ctx.fillStyle = '#fff'; ctx.fillRect(cx - cs / 2, cb - cs, cs, cs);
   ctx.strokeStyle = INK; ctx.lineWidth = 1.4 * R; ctx.strokeRect(cx - cs / 2, cb - cs, cs, cs);
   ctx.fillStyle = INK;
   ctx.beginPath(); ctx.arc(cx - cs * 0.18, cb - cs * 0.62, 0.9 * R + 0.4, 0, Math.PI * 2); ctx.arc(cx + cs * 0.18, cb - cs * 0.62, 0.9 * R + 0.4, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(cx, cb - cs * 0.42, cs * 0.18, 0.15 * Math.PI, 0.85 * Math.PI); ctx.lineWidth = 1 * R; ctx.stroke();
-  // rod + line (+ a fish in variant 1)
   ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 1.6 * R;
   ctx.beginPath(); ctx.moveTo(cx + cs * 0.5, cb - cs * 0.5); ctx.quadraticCurveTo(cx + pw * 0.3, cb - ph * 0.55, cx + pw * 0.45, cb - ph * 0.45); ctx.stroke();
   ctx.strokeStyle = 'rgba(27,27,27,.7)'; ctx.lineWidth = 0.8 * R;
@@ -908,88 +907,116 @@ function drawPhoto(px, py, pw, ph, variant, R) {
   sketch(ctx, rectPts(px, py, pw, ph), true, 0.3 * R, 1110 + variant); ink(ctx, 1.6 * R);
 }
 
+// a 3D-looking block: top face (seen from above) + front face
+function block(x, y, w, d, h, top, front, R, seed) {
+  sketch(ctx, rectPts(x, y, w, d), true, 0.4 * R, seed); fillInk(ctx, top, 2.4 * R);
+  sketch(ctx, rectPts(x, y + d, w, h), true, 0.4 * R, seed + 1); fillInk(ctx, front, 2.4 * R);
+}
+
 function drawInterior() {
-  const r = room(), R = r.R, d = world.dark, { x, y, rw, rh, wallH, floorTop } = r;
+  const r = room(), R = r.R, d = world.dark, { x, y, rw, rh, inset, floorTop, bx, bw } = r;
+  const fb = y + rh; // front (bottom) edge of the floor
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.fillStyle = '#1b130d'; ctx.fillRect(0, 0, W, H); // dark around the room, like Stardew
+  ctx.fillStyle = '#140d08'; ctx.fillRect(0, 0, W, H);
 
-  // back wall: horizontal logs
-  const logs = 5, lh = wallH / logs;
-  for (let i = 0; i < logs; i++) { sketch(ctx, rectPts(x, y + i * lh, rw, lh), true, 0.6 * R, 1000 + i); fillInk(ctx, i % 2 ? '#8b5a2b' : '#a0683a', 2 * R); }
-  // trim where wall meets floor
-  sketch(ctx, rectPts(x, floorTop - 8 * R, rw, 10 * R), true, 0.4 * R, 1006); fillInk(ctx, '#6e4426', 2 * R);
+  const LOG_A = '#6e4426', LOG_B = '#5a3720', FLOOR = '#a8743f';
+  // back wall (logs)
+  const logs = 6, lh = (floorTop - y) / logs;
+  for (let i = 0; i < logs; i++) { sketch(ctx, rectPts(bx, y + i * lh, bw, lh), true, 0.5 * R, 1000 + i); fillInk(ctx, i % 2 ? LOG_B : LOG_A, 2 * R); }
+  // side walls angling toward you (logs drawn as slanted seams)
+  const leftWall = [[x, y], [bx, y], [bx, floorTop], [x, fb]];
+  const rightWall = [[x + rw, y], [bx + bw, y], [bx + bw, floorTop], [x + rw, fb]];
+  for (const [wall, seed] of [[leftWall, 1010], [rightWall, 1011]]) {
+    sketch(ctx, wall, true, 0.5 * R, seed); fillInk(ctx, '#4f301b', 2.4 * R);
+    for (let i = 1; i < logs + 3; i++) {
+      const t = i / (logs + 3), outerX = wall[0][0], innerX = wall[1][0];
+      sketch(ctx, [[innerX, y + (floorTop - y) * t], [outerX, y + (fb - y) * t]], false, 0.3 * R, seed * 10 + i); ink(ctx, 1.6 * R, 0.55);
+    }
+  }
+  // door in the right wall (the entrance), drawn in perspective
+  const dt0 = 0.3, dt1 = 0.78; // how far along the wall (back -> front)
+  const pX = t => lerp(bx + bw, x + rw, t), pB = t => lerp(floorTop, fb, t), pT = t => y + (lerp(floorTop, fb, t) - y) * 0.2;
+  const door = [[pX(dt0), pT(dt0)], [pX(dt1), pT(dt1)], [pX(dt1), pB(dt1)], [pX(dt0), pB(dt0)]];
+  const frame = [[pX(dt0 - 0.03), pT(dt0 - 0.03) - 6 * R], [pX(dt1 + 0.03), pT(dt1 + 0.03) - 6 * R], [pX(dt1 + 0.03), pB(dt1 + 0.03)], [pX(dt0 - 0.03), pB(dt0 - 0.03)]];
+  sketch(ctx, frame, true, 0.4 * R, 1014); fillInk(ctx, '#3d2414', 2.4 * R);
+  sketch(ctx, door, true, 0.4 * R, 1015); fillInk(ctx, '#a0683a', 3 * R);
+  for (const tt of [0.35, 0.65]) { const t = lerp(dt0, dt1, tt); sketch(ctx, [[pX(t), pT(t) + 10 * R], [pX(t), pB(t) - 8 * R]], false, 0.3 * R, 1017 + tt * 10); ink(ctx, 1.2 * R, 0.35); }
+  sketch(ctx, [[pX((dt0 + dt1) / 2), pT((dt0 + dt1) / 2)], [pX((dt0 + dt1) / 2), pB((dt0 + dt1) / 2)]], false, 0.3 * R, 1016); ink(ctx, 1.4 * R, 0.5);
+  ctx.beginPath(); ctx.arc(pX(dt0 + 0.04), lerp(pT(dt0 + 0.04), pB(dt0 + 0.04), 0.55), 3.5 * R, 0, Math.PI * 2); ctx.fillStyle = '#f2c94c'; ctx.fill(); ink(ctx, 1.4 * R);
 
-  // window (middle of the wall)
-  const ww = 120 * R, wh = 92 * R, wx = r.cx - ww / 2 - 30 * R, wy = y + 30 * R;
+  // window + photos on the back wall
+  const ww = 120 * R, wh = 92 * R, wx = r.cx - ww / 2 - 10 * R, wy = y + 32 * R;
   const sky = ctx.createLinearGradient(0, wy, 0, wy + wh);
   sky.addColorStop(0, d > 0.5 ? '#1b2550' : '#bfe6ff'); sky.addColorStop(1, d > 0.5 ? '#3a4a8a' : '#fff6dc');
   sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.5 * R, 1020); ctx.fillStyle = sky; ctx.fill();
   ctx.fillStyle = d > 0.5 ? '#fdf3c4' : '#ffe27a';
   ctx.beginPath(); ctx.arc(wx + ww * 0.72, wy + wh * 0.32, 12 * R, 0, Math.PI * 2); ctx.fill();
   if (d > 0.5) for (const [sx, sy] of [[.2, .25], [.4, .15], [.3, .55], [.55, .45]]) { ctx.beginPath(); ctx.arc(wx + ww * sx, wy + wh * sy, 1.5 * R, 0, Math.PI * 2); ctx.fill(); }
-  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.5 * R, 1020); ink(ctx, 5 * R); ctx.strokeStyle = '#6e4426'; ctx.lineWidth = 3 * R; ctx.stroke();
+  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.5 * R, 1020); ink(ctx, 5 * R); ctx.strokeStyle = '#4a2f1a'; ctx.lineWidth = 3 * R; ctx.stroke();
   sketch(ctx, [[wx + ww / 2, wy], [wx + ww / 2, wy + wh]], false, 0.3 * R, 1021); ink(ctx, 3.5 * R);
   sketch(ctx, [[wx, wy + wh / 2], [wx + ww, wy + wh / 2]], false, 0.3 * R, 1022); ink(ctx, 3.5 * R);
-  sketch(ctx, rectPts(wx - 8 * R, wy + wh, ww + 16 * R, 8 * R), true, 0.3 * R, 1023); fillInk(ctx, '#c99a62', 2 * R);
+  sketch(ctx, rectPts(wx - 8 * R, wy + wh, ww + 16 * R, 8 * R), true, 0.3 * R, 1023); fillInk(ctx, '#8b5a2b', 2 * R);
+  drawPhoto(bx + 250 * R, y + 36 * R, 64 * R, 48 * R, 0, R);
+  drawPhoto(wx + ww + 26 * R, y + 30 * R, 74 * R, 54 * R, 2, R);
+  drawPhoto(wx + ww + 40 * R, y + 100 * R, 50 * R, 38 * R, 1, R);
 
-  // framed photos of the cube fishing
-  drawPhoto(x + 228 * R, y + 34 * R, 70 * R, 52 * R, 0, R);
-  drawPhoto(x + 248 * R, y + 100 * R, 52 * R, 40 * R, 1, R);
-  drawPhoto(wx + ww + 30 * R, y + 40 * R, 78 * R, 56 * R, 2, R);
-
-  // plank floor
-  sketch(ctx, rectPts(x, floorTop, rw, rh - wallH), true, 0.6 * R, 1030); fillInk(ctx, '#d9a066', 2.4 * R);
-  const ph = 28 * R;
-  for (let yy = floorTop + ph, i = 0; yy < y + rh - 2; yy += ph, i++) {
-    sketch(ctx, [[x + 2, yy], [x + rw - 2, yy]], false, 0.3 * R, 1031 + i); ink(ctx, 1.2 * R, 0.35);
-    for (let xx = x + ((i % 2) ? 60 : 130) * R; xx < x + rw; xx += 190 * R) { sketch(ctx, [[xx, yy - ph], [xx, yy]], false, 0.2 * R, 1050 + i * 9 + xx); ink(ctx, 1 * R, 0.3); }
-  }
-  // side/bottom walls (thin dark edges) + doormat at the bottom
-  ctx.strokeStyle = '#4a2f1a'; ctx.lineWidth = 10 * R; ctx.strokeRect(x - 5 * R, y - 5 * R, rw + 10 * R, rh + 10 * R);
-  sketch(ctx, rectPts(r.cx - 50 * R, y + rh - 26 * R, 100 * R, 22 * R), true, 0.4 * R, 1060); fillInk(ctx, '#7a9c4a', 2 * R);
-
-  // rug in the middle
-  sketch(ctx, ellipsePts(r.cx + 20 * R, floorTop + 210 * R, 160 * R, 70 * R, 32), true, 0.6 * R, 1040); fillInk(ctx, '#d9534f', 2.6 * R);
-  sketch(ctx, ellipsePts(r.cx + 20 * R, floorTop + 210 * R, 120 * R, 50 * R, 28), true, 0.4 * R, 1041); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * R; ctx.stroke();
-
-  // bed against the back wall (seen from above)
-  const b = r.bed;
-  sketch(ctx, rectPts(b.x, b.y - 40 * R, b.w, 46 * R), true, 0.5 * R, 1070); fillInk(ctx, '#7a4a24', 2.6 * R); // headboard
-  sketch(ctx, rectPts(b.x + 6 * R, b.y, b.w - 12 * R, b.h), true, 0.5 * R, 1071); fillInk(ctx, '#8b5a2b', 2.6 * R); // frame
-  sketch(ctx, rectPts(b.x + 14 * R, b.y + 8 * R, b.w - 28 * R, b.h - 22 * R), true, 0.5 * R, 1072); fillInk(ctx, '#fff', 2.2 * R); // sheet
-  sketch(ctx, ellipsePts(b.x + b.w / 2, b.y + 34 * R, b.w * 0.32, 20 * R, 18), true, 0.4 * R, 1073); fillInk(ctx, '#fffaf0', 2 * R); // pillow
-  const bl = rectPts(b.x + 12 * R, b.y + 74 * R, b.w - 24 * R, b.h - 80 * R);
-  sketch(ctx, bl, true, 0.5 * R, 1074); fillInk(ctx, '#4aa3df', 2.4 * R);
-  ctx.save(); sketch(ctx, bl, true, 0.5 * R, 1074); ctx.clip();
-  for (let k = 0; k < 8; k++) { ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(b.x + 12 * R + k * 24 * R, b.y + 74 * R, 11 * R, b.h); ctx.fillRect(b.x, b.y + 84 * R + k * 24 * R, b.w, 11 * R); }
+  // floor (trapezoid) with planks running toward you
+  const floor = [[bx, floorTop], [bx + bw, floorTop], [x + rw, fb], [x, fb]];
+  sketch(ctx, floor, true, 0.5 * R, 1030); fillInk(ctx, FLOOR, 2.4 * R);
+  ctx.save(); sketch(ctx, floor, true, 0.5 * R, 1030); ctx.clip();
+  for (let i = 0; i <= 12; i++) { const t = i / 12; sketch(ctx, [[lerp(bx, bx + bw, t), floorTop], [lerp(x, x + rw, t), fb]], false, 0.3 * R, 1032 + i); ink(ctx, 1.2 * R, 0.35); }
+  for (let k = 1; k < 7; k++) { const t = Math.pow(k / 7, 1.4), yy = lerp(floorTop, fb, t); sketch(ctx, [[x, yy], [x + rw, yy]], false, 0.3 * R, 1050 + k); ink(ctx, 1 * R, 0.22); }
   ctx.restore();
-  sketch(ctx, [[b.x + 12 * R, b.y + 78 * R], [b.x + b.w - 12 * R, b.y + 78 * R]], false, 0.3 * R, 1075); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 3 * R; ctx.stroke();
+  // baseboard where the back wall meets the floor
+  sketch(ctx, rectPts(bx, floorTop - 7 * R, bw, 8 * R), true, 0.3 * R, 1006); fillInk(ctx, '#3d2414', 1.8 * R);
+  // doormat on the floor by the door
+  const mx = lerp(bx + bw, x + rw, 0.64) - 70 * R, my = lerp(floorTop, fb, 0.64) - 6 * R;
+  sketch(ctx, [[mx, my - 16 * R], [mx + 60 * R, my - 18 * R], [mx + 66 * R, my + 18 * R], [mx - 4 * R, my + 16 * R]], true, 0.3 * R, 1060); fillInk(ctx, '#7a9c4a', 2 * R);
 
-  // workbench against the back wall (top + front face), with a rod and tools on it
+  // rug
+  const rugY = lerp(floorTop, fb, 0.55);
+  sketch(ctx, ellipsePts(r.cx, rugY, 170 * R, 62 * R, 32), true, 0.6 * R, 1040); fillInk(ctx, '#c0453f', 2.6 * R);
+  sketch(ctx, ellipsePts(r.cx, rugY, 130 * R, 44 * R, 28), true, 0.4 * R, 1041); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * R; ctx.stroke();
+
+  // bed: headboard against the wall, frame with mattress, pillow and a folded-back blanket
+  const b = r.bed, fh = 26 * R; // fh = footboard (front face) height
+  sketch(ctx, rectPts(b.x - 4 * R, b.y - 54 * R, b.w + 8 * R, 60 * R), true, 0.4 * R, 1070); fillInk(ctx, '#4f301b', 2.6 * R); // headboard
+  for (const px of [b.x + 18 * R, b.x + b.w - 18 * R]) { sketch(ctx, [[px, b.y - 50 * R], [px, b.y - 2 * R]], false, 0.2 * R, 1071 + px); ink(ctx, 1.4 * R, 0.4); }
+  block(b.x, b.y, b.w, b.d, fh, '#7a4a24', '#5a3720', R, 1072); // frame
+  sketch(ctx, rectPts(b.x + 10 * R, b.y + 6 * R, b.w - 20 * R, b.d - 12 * R), true, 0.4 * R, 1074); fillInk(ctx, '#fffaf0', 2.2 * R); // mattress
+  sketch(ctx, rectPts(b.x + 26 * R, b.y + 14 * R, b.w - 52 * R, 38 * R), true, 0.5 * R, 1075); fillInk(ctx, '#ffffff', 2.2 * R); // pillow
+  sketch(ctx, [[b.x + b.w / 2, b.y + 18 * R], [b.x + b.w / 2, b.y + 48 * R]], false, 0.2 * R, 1076); ink(ctx, 1.2 * R, 0.3);
+  const blTop = b.y + 74 * R, bl = rectPts(b.x + 8 * R, blTop, b.w - 16 * R, b.d - 74 * R);
+  sketch(ctx, bl, true, 0.5 * R, 1077); fillInk(ctx, '#3f86c4', 2.4 * R);
+  ctx.save(); sketch(ctx, bl, true, 0.5 * R, 1077); ctx.clip();
+  for (let k = 0; k < 9; k++) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(b.x + 8 * R + k * 22 * R, blTop, 10 * R, b.d); ctx.fillRect(b.x, blTop + 14 * R + k * 22 * R, b.w, 10 * R); }
+  ctx.restore();
+  sketch(ctx, rectPts(b.x + 8 * R, blTop - 6 * R, b.w - 16 * R, 16 * R), true, 0.4 * R, 1078); fillInk(ctx, '#ffffff', 2 * R); // folded sheet edge
+  sketch(ctx, rectPts(b.x + 8 * R, b.y + b.d - 2 * R, b.w - 16 * R, 10 * R), true, 0.3 * R, 1079); fillInk(ctx, '#3f86c4', 1.8 * R); // blanket hanging over the end
+
+  // workbench against the back wall (3D block) with a rod and tools on it
   const dk = r.desk;
-  sketch(ctx, rectPts(dk.x, dk.y, dk.w, dk.h * 0.62), true, 0.5 * R, 1080); fillInk(ctx, '#c99a62', 2.6 * R);
-  sketch(ctx, rectPts(dk.x, dk.y + dk.h * 0.62, dk.w, dk.h * 0.38), true, 0.5 * R, 1081); fillInk(ctx, '#8b5a2b', 2.6 * R);
-  for (const lx of [dk.x + 6 * R, dk.x + dk.w - 18 * R]) { sketch(ctx, rectPts(lx, dk.y + dk.h, 12 * R, 22 * R), true, 0.3 * R, 1082 + lx); fillInk(ctx, '#6e4426', 2 * R); }
+  block(dk.x, dk.y, dk.w, dk.d, dk.h, '#8b5a2b', '#5a3720', R, 1080);
+  for (const lx of [dk.x + 8 * R, dk.x + dk.w - 20 * R]) { sketch(ctx, rectPts(lx, dk.y + dk.d + dk.h, 12 * R, 20 * R), true, 0.3 * R, 1082 + lx); fillInk(ctx, '#3d2414', 2 * R); }
   ctx.lineCap = 'round';
-  ctx.strokeStyle = INK; ctx.lineWidth = 7 * R; ctx.beginPath(); ctx.moveTo(dk.x + 26 * R, dk.y + 44 * R); ctx.lineTo(dk.x + 150 * R, dk.y + 14 * R); ctx.stroke();
-  ctx.strokeStyle = '#c99a62'; ctx.lineWidth = 4 * R; ctx.stroke();
-  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 6 * R; ctx.beginPath(); ctx.moveTo(dk.x + 26 * R, dk.y + 44 * R); ctx.lineTo(dk.x + 52 * R, dk.y + 38 * R); ctx.stroke();
-  sketch(ctx, rectPts(dk.x + 160 * R, dk.y + 12 * R, 26 * R, 18 * R), true, 0.3 * R, 1085); fillInk(ctx, '#9aa3ad', 2 * R); // vise
-  sketch(ctx, [[dk.x + 120 * R, dk.y + 46 * R], [dk.x + 146 * R, dk.y + 40 * R]], false, 0.2 * R, 1086); ink(ctx, 3 * R); // hammer handle
-  sketch(ctx, rectPts(dk.x + 142 * R, dk.y + 34 * R, 10 * R, 14 * R), true, 0.2 * R, 1087); fillInk(ctx, '#6b7280', 1.6 * R);
-  // lamp on the bench
-  const lx = dk.x + dk.w - 30 * R, ly = dk.y + 18 * R;
+  ctx.strokeStyle = INK; ctx.lineWidth = 7 * R; ctx.beginPath(); ctx.moveTo(dk.x + 26 * R, dk.y + 50 * R); ctx.lineTo(dk.x + 150 * R, dk.y + 18 * R); ctx.stroke();
+  ctx.strokeStyle = '#d9aa72'; ctx.lineWidth = 4 * R; ctx.stroke();
+  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 6 * R; ctx.beginPath(); ctx.moveTo(dk.x + 26 * R, dk.y + 50 * R); ctx.lineTo(dk.x + 52 * R, dk.y + 43 * R); ctx.stroke();
+  sketch(ctx, rectPts(dk.x + 160 * R, dk.y + 14 * R, 26 * R, 18 * R), true, 0.3 * R, 1085); fillInk(ctx, '#9aa3ad', 2 * R);
+  sketch(ctx, [[dk.x + 118 * R, dk.y + 52 * R], [dk.x + 144 * R, dk.y + 45 * R]], false, 0.2 * R, 1086); ink(ctx, 3 * R);
+  sketch(ctx, rectPts(dk.x + 140 * R, dk.y + 38 * R, 10 * R, 14 * R), true, 0.2 * R, 1087); fillInk(ctx, '#6b7280', 1.6 * R);
+  const lx = dk.x + dk.w - 30 * R, ly = dk.y + 22 * R;
   sketch(ctx, ellipsePts(lx, ly, 14 * R, 10 * R, 14), true, 0.3 * R, 1088); fillInk(ctx, '#ffd166', 2 * R);
-  // stool in front of the bench
-  sketch(ctx, ellipsePts(dk.x + 100 * R, dk.y + dk.h + 46 * R, 26 * R, 16 * R, 16), true, 0.4 * R, 1089); fillInk(ctx, '#a0683a', 2.4 * R);
+  // stool (little 3D block) in front of the bench
+  block(dk.x + 80 * R, dk.y + dk.d + dk.h + 40 * R, 46 * R, 30 * R, 18 * R, '#8b5a2b', '#5a3720', R, 1089);
 
-  // plant in the corner
-  sketch(ctx, rectPts(x + rw - 52 * R, y + rh - 70 * R, 32 * R, 30 * R), true, 0.3 * R, 1090); fillInk(ctx, '#d0704b', 2 * R);
-  for (const [ox, oy] of [[-10, -14], [8, -18], [0, -26], [16, -6], [-16, -4]]) { sketch(ctx, ellipsePts(x + rw - 36 * R + ox * R, y + rh - 72 * R + oy * R, 10 * R, 7 * R, 10), true, 0.3 * R, 1091 + ox); fillInk(ctx, '#7ccf5a', 1.8 * R); }
+  // plant in the front-left corner
+  block(x + 60 * R, fb - 80 * R, 34 * R, 14 * R, 26 * R, '#b85f3f', '#9a4b30', R, 1090);
+  for (const [ox, oy] of [[-10, -14], [8, -18], [0, -26], [16, -6], [-16, -4]]) { sketch(ctx, ellipsePts(x + 77 * R + ox * R, fb - 84 * R + oy * R, 10 * R, 7 * R, 10), true, 0.3 * R, 1092 + ox); fillInk(ctx, '#6cbf4a', 1.8 * R); }
 
-  // the cube, at home on the rug
-  const cs = 54 * R, ccx = r.cx + 20 * R, cy = floorTop + 214 * R + Math.sin(time * 2) * 2 * R;
-  ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(ccx, cy + 2 * R, cs * 0.6, 8 * R, 0, 0, Math.PI * 2); ctx.fill();
+  // the cube on the rug
+  const cs = 56 * R, ccx = r.cx, cy = rugY + 10 * R + Math.sin(time * 2) * 2 * R;
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(ccx, cy + 2 * R, cs * 0.6, 8 * R, 0, 0, Math.PI * 2); ctx.fill();
   sketch(ctx, rectPts(ccx - cs / 2, cy - cs, cs, cs), true, 0.8 * R, 1095); fillInk(ctx, '#fff', 3 * R);
   ctx.fillStyle = INK;
   ctx.beginPath(); ctx.ellipse(ccx - cs * 0.18, cy - cs * 0.62, 3 * R, 4.6 * R, 0, 0, Math.PI * 2); ctx.fill();
@@ -1003,7 +1030,7 @@ function drawInterior() {
     ctx.restore();
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; glowAt(lx, ly, 200 * R, '255,200,110', 0.55 * d); ctx.restore();
   }
-  if (bedHover) bubble(b.x + b.w / 2, b.y - 62 * R, 'Sleep');
+  if (bedHover) bubble(b.x + b.w / 2, b.y - 76 * R, 'Sleep');
   if (deskHover) bubble(dk.x + dk.w / 2, dk.y - 30 * R, 'Rod Workbench');
 }
 const leaveBtn = document.getElementById('leaveCabin'), sleepFade = document.getElementById('sleepFade');
@@ -1712,7 +1739,12 @@ let mergePick = [];
 const shortName = r => r.name.replace(/ Rod$/, '').split('-')[0].split(' ')[0];
 function mergeCandidates() { return S.ownedRods.filter(id => id !== RODS[0].id && ROD[id]).map(id => ROD[id]); }
 function mergedRod(a, b) {
-  const luck = Math.max(a.luck + b.luck - MERGE.luckPenalty, a.luck, b.luck);
+  // take away the normal penalty, but if that would erase the gain over the better
+  // rod, use a smaller one (-100%, then -50%) so merging still pays off
+  const best = Math.max(a.luck, b.luck);
+  let luck = a.luck + b.luck - MERGE.luckPenalty;
+  for (const p of MERGE.softPenalties || [1, 0.5]) if (luck <= best) luck = a.luck + b.luck - p;
+  luck = Math.max(luck, best);
   return {
     id: 'merged_' + Date.now().toString(36), name: `${shortName(a)}-${shortName(b)} Rod`, price: 0,
     // speed boosts add together with no penalty: 2.3x + 2.6x faster -> (1.3 + 1.6) extra -> 3.9x faster
@@ -1725,7 +1757,7 @@ function openMerge() { mergePick = []; renderMerge(); openModal(mergeEl); setMon
 function renderMerge() {
   const list = mergeCandidates();
   mergePick = mergePick.filter(id => list.some(r => r.id === id));
-  let html = `<p class="tab-intro">Pick two rods to fuse into one. Luck adds up, minus ${Math.round(MERGE.luckPenalty * 100)}%. Speed adds up fully. Both rods are used up.</p>`;
+  let html = `<p class="tab-intro">Pick two rods to fuse into one. Luck adds up, minus ${Math.round(MERGE.luckPenalty * 100)}% (or just 100% / 50% if that would cancel the gain). Speed adds up fully. Both rods are used up.</p>`;
   if (list.length < 2) {
     html += `<div class="empty-note">You need at least 2 rods (not counting the Basic Rod) to merge. Buy more at the shop!</div>`;
   } else {

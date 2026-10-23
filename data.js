@@ -11,7 +11,9 @@ window.GAME_DATA = {
   // Rod merging at the cabin table: merged luck = luck A + luck B - luckPenalty
   // (never lower than the better of the two); speed boosts add up with no penalty
   // (capped so bites are never faster than 0.15x the wait). fee = coins per merge.
-  MERGE: { fee: 100000, luckPenalty: 3.0 },
+  // If -luckPenalty would leave no gain over the better rod, the smaller
+  // `softPenalties` are tried in order instead (-100%, then -50%).
+  MERGE: { fee: 100000, luckPenalty: 3.0, softPenalties: [1.0, 0.5] },
 
   // The plot of land for sale next to the shop.
   PROPERTY: { price: 500000 },
