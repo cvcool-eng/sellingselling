@@ -24,6 +24,12 @@ function loadState() {
       const s = Object.assign(freshState(), JSON.parse(raw));
       if (!ROD[s.rod]) s.rod = RODS[0].id;
       if (s.bait && !BAIT[s.bait]) s.bait = null;
+      // old junk items became fish: move them over to the fish that replaced them
+      for (const it of ITEMS) {
+        if (!it.replaces) continue;
+        if (s.inventory[it.replaces]) { s.inventory[it.id] = (s.inventory[it.id] || 0) + s.inventory[it.replaces]; delete s.inventory[it.replaces]; }
+        if (s.discovered[it.replaces]) { s.discovered[it.id] = true; delete s.discovered[it.replaces]; }
+      }
       for (const id in s.inventory) s.inventory[id] = Math.min(s.inventory[id], STACK_MAX);
       return s;
     }
