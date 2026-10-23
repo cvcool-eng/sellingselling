@@ -397,7 +397,7 @@ function drawLensWater() {
     g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(0.7, `rgba(200,232,255,${a * 0.6})`); g.addColorStop(1, 'rgba(200,232,255,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
   }
-  // drops stuck on the lens: each shows a flipped, magnified bit of the scene like real water
+  // drops stuck on the lens are turned off (lens stays empty); kept for easy re-enabling
   for (const d of lens) {
     const a = clamp(Math.min(d.life, d.max - d.life) / 0.3, 0, 1);
     if (a <= 0) continue;
@@ -510,7 +510,6 @@ function update(dt) {
   ripples = ripples.filter(r => r.t < 1.4);
 
   // lens drops slide down slowly; new ones keep landing from the splash
-  if (t > nextLens && lens.length < 14) { spawnLens(false); nextLens = t + rand(0.4, 1.0); }
   for (const d of lens) { d.life -= dt; const m = d.vy * dt * (d.r / (4 * U)); d.y += m; d.trail += m; }
   lens = lens.filter(d => d.life > 0);
   if (t > nextFg) {
@@ -595,6 +594,5 @@ window.addEventListener('resize', () => { if (open) resize(); });
 })();
 
 resize();
-for (let i = 0; i < 12; i++) spawnLens(true);
 requestAnimationFrame(frame);
 })();

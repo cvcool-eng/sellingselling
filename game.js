@@ -292,7 +292,8 @@ function update(dt) {
       const u = clamp(F.t / 0.2, 0, 1);
       F.angle = lerp(-2.35, -0.5, easeInOut(u));
       tTilt = 0.15; tsx = 0.93; tsy = 1.08; tBend = 0.14;
-      if (u >= 1) { F.from = rodTip(); go('flying'); }
+      // launch from wherever the swinging bobber is right now, so it never jumps
+      if (u >= 1) { F.from = [F.dangle.x, F.dangle.y]; go('flying'); }
       break;
     }
     case 'flying': {
@@ -350,6 +351,23 @@ function update(dt) {
     if (F.fly.t >= 0.8 && F.state !== 'reveal') { F.fly = null; showReveal(F.item); go('reveal'); }
   }
   if (C.poke > 0) { C.poke -= dt; tsx += Math.sin(C.poke * 40) * 0.05; tsy -= Math.sin(C.poke * 40) * 0.05; }
+
+  // The bobber hanging off the tip swings like a pendulum (verlet) instead of
+  // being glued below the tip; while it's flying or in the water it just follows F.bob.
+  const tipNow = rodTip(), ropeLen = 24 * K;
+  const D = F.dangle || (F.dangle = { x: tipNow[0], y: tipNow[1] + ropeLen, px: tipNow[0], py: tipNow[1] + ropeLen });
+  if (['flying', 'waiting', 'bite', 'reel'].includes(F.state)) {
+    D.x = D.px = F.bob.x; D.y = D.py = F.bob.y;
+  } else {
+    const ox = D.x, oy = D.y, keep = Math.max(0, 1 - 2.2 * dt);
+    D.x += (D.x - D.px) * keep;
+    D.y += (D.y - D.py) * keep + 1400 * K * dt * dt;
+    D.px = ox; D.py = oy;
+    const dx = D.x - tipNow[0], dy = D.y - tipNow[1], d = Math.hypot(dx, dy) || 1;
+    if (d > ropeLen) { D.x = tipNow[0] + dx / d * ropeLen; D.y = tipNow[1] + dy / d * ropeLen; }
+  }
+  const sagTarget = F.state === 'waiting' ? 26 * K : F.state === 'flying' ? 14 * K : (F.state === 'bite' || F.state === 'reel') ? 0 : 3 * K;
+  F.sag = approach(F.sag == null ? sagTarget : F.sag, sagTarget, dt * 10);
 
   F.bend = approach(F.bend, tBend, dt * 18);
   C.tilt = approach(C.tilt, tTilt, dt * 14);
@@ -821,10 +839,10 @@ function drawRodAndLine() {
   const inWater = F.state === 'waiting' || F.state === 'bite';
   const flying = F.state === 'flying' || F.state === 'reel';
   let bx, by;
-  if (inWater || flying) { bx = F.bob.x; by = F.bob.y; }
-  else { bx = tip[0] + Math.sin(time * 2) * 3 * K; by = tip[1] + 24 * K; }
+  if (inWater || flying || !F.dangle) { bx = F.bob.x; by = F.bob.y; }
+  else { bx = F.dangle.x; by = F.dangle.y; }
 
-  const sag = F.state === 'waiting' ? 26 * K : F.state === 'flying' ? 14 * K : (F.state === 'bite' || F.state === 'reel') ? 0 : 3 * K;
+  const sag = F.sag || 0;
   ctx.beginPath(); ctx.moveTo(tip[0], tip[1]);
   ctx.quadraticCurveTo((tip[0] + bx) / 2, (tip[1] + by) / 2 + sag, bx, by);
   ctx.strokeStyle = 'rgba(27,27,27,.75)'; ctx.lineWidth = 1.3 * K; ctx.stroke();
