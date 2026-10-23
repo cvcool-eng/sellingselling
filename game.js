@@ -874,11 +874,12 @@ function room() {
   return {
     R, x, y, rw, rh, inset, wallH, floorTop,
     bx: x + inset, bw: rw - inset * 2, cx: x + rw / 2,
-    bed: { x: x + inset + 24 * R, y: floorTop - 30 * R, w: 180 * R, d: 240 * R },
+    // bed lies sideways: head against the left wall, foot pointing right toward the door
+    bed: { x: x + inset * 0.68 + 18 * R, y: floorTop + 26 * R, w: 200 * R, d: 104 * R },
     desk: { x: x + rw - inset - 270 * R, y: floorTop - 10 * R, w: 230 * R, d: 70 * R, h: 44 * R },
   };
 }
-function hitBed(sx, sy) { const r = room(), b = r.bed; return sx > b.x - 10 * r.R && sx < b.x + b.w + 10 * r.R && sy > b.y - 50 * r.R && sy < b.y + b.d + 40 * r.R; }
+function hitBed(sx, sy) { const r = room(), b = r.bed; return sx > b.x - 24 * r.R && sx < b.x + b.w + 10 * r.R && sy > b.y - 50 * r.R && sy < b.y + b.d + 30 * r.R; }
 function hitDesk(sx, sy) { const r = room(), d = r.desk; return sx > d.x - 10 * r.R && sx < d.x + d.w + 10 * r.R && sy > d.y - 50 * r.R && sy < d.y + d.d + d.h + 50 * r.R; }
 
 // a little framed photo of the cube out fishing (variant picks the scene)
@@ -978,21 +979,24 @@ function drawInterior() {
   sketch(ctx, ellipsePts(r.cx, rugY, 170 * R, 62 * R, 32), true, 0.6 * R, 1040); fillInk(ctx, '#c0453f', 2.6 * R);
   sketch(ctx, ellipsePts(r.cx, rugY, 130 * R, 44 * R, 28), true, 0.4 * R, 1041); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * R; ctx.stroke();
 
-  // bed: headboard against the wall, frame with mattress, pillow and a folded-back blanket
-  const b = r.bed, fh = 26 * R; // fh = footboard (front face) height
-  sketch(ctx, rectPts(b.x - 4 * R, b.y - 54 * R, b.w + 8 * R, 60 * R), true, 0.4 * R, 1070); fillInk(ctx, '#4f301b', 2.6 * R); // headboard
-  for (const px of [b.x + 18 * R, b.x + b.w - 18 * R]) { sketch(ctx, [[px, b.y - 50 * R], [px, b.y - 2 * R]], false, 0.2 * R, 1071 + px); ink(ctx, 1.4 * R, 0.4); }
+  // bed lying sideways: headboard against the left wall, foot toward the door
+  const b = r.bed, fh = 22 * R; // fh = side (front face) height
   block(b.x, b.y, b.w, b.d, fh, '#7a4a24', '#5a3720', R, 1072); // frame
-  sketch(ctx, rectPts(b.x + 10 * R, b.y + 6 * R, b.w - 20 * R, b.d - 12 * R), true, 0.4 * R, 1074); fillInk(ctx, '#fffaf0', 2.2 * R); // mattress
-  sketch(ctx, rectPts(b.x + 26 * R, b.y + 14 * R, b.w - 52 * R, 38 * R), true, 0.5 * R, 1075); fillInk(ctx, '#ffffff', 2.2 * R); // pillow
-  sketch(ctx, [[b.x + b.w / 2, b.y + 18 * R], [b.x + b.w / 2, b.y + 48 * R]], false, 0.2 * R, 1076); ink(ctx, 1.2 * R, 0.3);
-  const blTop = b.y + 74 * R, bl = rectPts(b.x + 8 * R, blTop, b.w - 16 * R, b.d - 74 * R);
+  sketch(ctx, rectPts(b.x + 6 * R, b.y + 8 * R, b.w - 14 * R, b.d - 16 * R), true, 0.4 * R, 1074); fillInk(ctx, '#fffaf0', 2.2 * R); // mattress
+  sketch(ctx, rectPts(b.x + 14 * R, b.y + 16 * R, 40 * R, b.d - 32 * R), true, 0.5 * R, 1075); fillInk(ctx, '#ffffff', 2.2 * R); // pillow
+  sketch(ctx, [[b.x + 20 * R, b.y + b.d / 2], [b.x + 48 * R, b.y + b.d / 2]], false, 0.2 * R, 1076); ink(ctx, 1.2 * R, 0.3);
+  const blX = b.x + 70 * R, bl = rectPts(blX, b.y + 4 * R, b.w - 74 * R, b.d - 8 * R);
   sketch(ctx, bl, true, 0.5 * R, 1077); fillInk(ctx, '#3f86c4', 2.4 * R);
   ctx.save(); sketch(ctx, bl, true, 0.5 * R, 1077); ctx.clip();
-  for (let k = 0; k < 9; k++) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(b.x + 8 * R + k * 22 * R, blTop, 10 * R, b.d); ctx.fillRect(b.x, blTop + 14 * R + k * 22 * R, b.w, 10 * R); }
+  for (let k = 0; k < 8; k++) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(blX + 10 * R + k * 20 * R, b.y, 9 * R, b.d); ctx.fillRect(blX, b.y + 10 * R + k * 20 * R, b.w, 9 * R); }
   ctx.restore();
-  sketch(ctx, rectPts(b.x + 8 * R, blTop - 6 * R, b.w - 16 * R, 16 * R), true, 0.4 * R, 1078); fillInk(ctx, '#ffffff', 2 * R); // folded sheet edge
-  sketch(ctx, rectPts(b.x + 8 * R, b.y + b.d - 2 * R, b.w - 16 * R, 10 * R), true, 0.3 * R, 1079); fillInk(ctx, '#3f86c4', 1.8 * R); // blanket hanging over the end
+  sketch(ctx, rectPts(blX - 6 * R, b.y + 4 * R, 14 * R, b.d - 8 * R), true, 0.4 * R, 1078); fillInk(ctx, '#ffffff', 2 * R); // folded sheet edge
+  sketch(ctx, rectPts(blX, b.y + b.d, b.w - 74 * R, fh * 0.75), true, 0.3 * R, 1079); fillInk(ctx, '#3f86c4', 1.8 * R); // blanket hanging over the side
+  // headboard standing against the left wall
+  sketch(ctx, rectPts(b.x - 18 * R, b.y - 44 * R, 20 * R, b.d + fh + 44 * R), true, 0.4 * R, 1070); fillInk(ctx, '#4f301b', 2.6 * R);
+  sketch(ctx, rectPts(b.x - 22 * R, b.y - 50 * R, 28 * R, 10 * R), true, 0.3 * R, 1071); fillInk(ctx, '#3d2414', 2 * R);
+  // low footboard at the end facing the door
+  sketch(ctx, rectPts(b.x + b.w - 8 * R, b.y - 10 * R, 12 * R, b.d + fh + 10 * R), true, 0.3 * R, 1073); fillInk(ctx, '#4f301b', 2.2 * R);
 
   // workbench against the back wall (3D block) with a rod and tools on it
   const dk = r.desk;
