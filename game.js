@@ -214,6 +214,7 @@ function buildDecor() {
     if (insidePond(x, y, 1.12)) continue;
     if (Math.abs(x - L.shopX) < 150 * K && y < L.shopBase + 12 * K) continue;
     if (x > L.shopX - 325 * K && x < L.shopX - 155 * K && y < L.shopBase + 12 * K) continue; // merchant stall spot
+    if (Math.abs(x - propX()) < 150 * K && Math.abs(y - propY()) < 60 * K) continue; // property plot
     if (x > L.dockX0 - 10 && x < L.dockX1 + 20 * K && y > L.deckY - 16 * K && y < L.deckY + 40 * K) continue;
     decor.tufts.push({ x, y, s: (0.7 + r() * 0.6) * K, ph: r() * 6 });
     if (r() < 0.22) decor.flowers.push({ x: x + r() * 20 * K, y: y + 4 * K, c: ['#ff8fab', '#ffd166', '#ffffff', '#b28dff'][Math.floor(r() * 4)], ph: r() * 6, s: K });
@@ -503,6 +504,7 @@ function draw() {
   drawSignpost();
   drawShop();
   drawMerchant();
+  drawProperty();
   drawPond();
   for (const rd of decor.reeds) drawReed(rd);
   drawDock();
@@ -562,6 +564,7 @@ function drawNight() {
   const sw = 210 * K, sh = 125 * K;
   glowAt(L.shopX - sw / 2 + 57 * K, L.shopBase - sh + 68 * K, 80 * K, '255,200,110', 0.55 * d);
   if (merchant.walk > 0) { const [lx, ly] = merchantLantern(); glowAt(lx, ly, 60 * K, '255,190,90', 0.7 * d * merchant.walk); }
+  if (S.property && cabinRise() >= 1) { const [cx2, cy2] = cabinWindow(); glowAt(cx2, cy2, 70 * K, '255,200,110', 0.6 * d); }
   for (const f of decor.fireflies) {
     const blink = Math.max(0, Math.sin(time * 1.7 + f.ph * 3));
     if (blink <= 0) continue;
@@ -766,6 +769,95 @@ function drawShop() {
   ctx.restore();
 
   if (shopHover) bubble(x, by - h - 110 * K, 'Open shop!');
+}
+
+// ---------- property for sale (paved plot, lower down, just left of the shop) ----------
+const PROPERTY_PRICE = (window.GAME_DATA.PROPERTY || {}).price || 500000;
+const propX = () => L.shopX - 170 * K;
+const propY = () => L.shopBase + 150 * K;
+let propHover = false;
+function hitProperty(wx, wy) { return Math.abs(wx - propX()) < 140 * K && wy > propY() - 95 * K && wy < propY() + 44 * K; }
+function drawProperty() {
+  const x = propX(), y = propY(), u = K, owned = !!S.property;
+  ctx.save(); ctx.translate(x, y);
+  if (propHover) ctx.scale(1.03, 1.03);
+  // paved slab, a little perspective (back edge narrower)
+  const slab = [[-118 * u, -38 * u], [118 * u, -38 * u], [134 * u, 38 * u], [-134 * u, 38 * u]];
+  ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.beginPath(); ctx.ellipse(0, 42 * u, 140 * u, 9 * u, 0, 0, Math.PI * 2); ctx.fill();
+  // same look as the dirt walkway to the shop: sandy tan, soft outline, a few pebbles
+  sketch(ctx, slab, true, 1 * u, 900);
+  ctx.fillStyle = '#efe0bd'; ctx.fill(); ink(ctx, 1.8 * u, 0.4);
+  for (const [px, py] of [[-80, -18], [-30, 12], [40, -24], [90, 16], [10, 26], [-100, 20], [70, -6]]) {
+    ctx.beginPath(); ctx.ellipse(px * u, py * u, 3 * u, 2 * u, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(160,130,90,.35)'; ctx.fill();
+  }
+  if (!owned) {
+    // "for sale" sign on the back edge
+    sketch(ctx, rectPts(-4 * u, -92 * u, 8 * u, 58 * u), true, 0.5 * u, 920); fillInk(ctx, '#87582e', 2.4 * u);
+    const bw = 132 * u, bh = 46 * u, by = -100 * u;
+    sketch(ctx, rectPts(-bw / 2, by, bw, bh), true, 0.8 * u, 921); fillInk(ctx, '#fff', 2.8 * u);
+    ctx.fillStyle = INK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `${20 * u}px ${HAND_FONT}`; ctx.fillText('Property', 0, by + 15 * u);
+    ctx.font = `${15 * u}px ${HAND_FONT}`; ctx.fillStyle = '#c0392b';
+    ctx.fillText(`${fmt(PROPERTY_PRICE)} coins`, 0, by + 34 * u);
+  } else {
+    drawCabin(u);
+  }
+  ctx.restore();
+  if (propHover) bubble(x, y - (owned ? 190 : 124) * K, owned ? 'Your cabin!' : 'Buy this land!');
+}
+
+// The cabin that builds itself on the property once it's bought (log version of the shop).
+let cabinBuiltAt = -99;
+function cabinRise() { return clamp((time - cabinBuiltAt) / 1.2, 0, 1); }
+function cabinWindow() { return [propX() - 44 * K, propY() - 56 * K]; }
+function drawCabin(u) {
+  const rise = cabinRise(), p = rise >= 1 ? 1 : easeOutBack(rise);
+  ctx.save(); ctx.translate(0, -6 * u); ctx.scale(1, Math.max(0.02, p)); // grows up out of the slab
+  const w = 156 * u, h = 82 * u, logs = 5, lh = h / logs;
+  // log walls
+  for (let i = 0; i < logs; i++) {
+    const y0 = -h + i * lh;
+    sketch(ctx, rectPts(-w / 2, y0, w, lh), true, 0.6 * u, 940 + i); fillInk(ctx, i % 2 ? '#8b5a2b' : '#a0683a', 2.2 * u);
+    for (const ex of [-w / 2, w / 2]) { ctx.beginPath(); ctx.ellipse(ex, y0 + lh / 2, 5 * u, lh / 2 - 0.5 * u, 0, 0, Math.PI * 2); ctx.fillStyle = '#c99a62'; ctx.fill(); ink(ctx, 1.8 * u); ctx.beginPath(); ctx.arc(ex, y0 + lh / 2, 2 * u, 0, Math.PI * 2); ink(ctx, 1 * u, 0.6); }
+  }
+  // chimney + roof
+  sketch(ctx, rectPts(36 * u, -h - 66 * u, 20 * u, 44 * u), true, 0.6 * u, 950); fillInk(ctx, '#9aa3ad', 2.4 * u);
+  for (const yy of [-h - 52, -h - 38]) { sketch(ctx, [[36 * u, yy * u], [56 * u, yy * u]], false, 0.3 * u, 951 + yy); ink(ctx, 1.2 * u, 0.5); }
+  const roof = [[-w / 2 - 16 * u, -h + 2 * u], [0, -h - 66 * u], [w / 2 + 16 * u, -h + 2 * u]];
+  sketch(ctx, roof, true, 1 * u, 952); fillInk(ctx, '#5b3a22', 3 * u);
+  for (let r = 1; r < 4; r++) { const t = r / 4; sketch(ctx, [[-(w / 2 + 16 * u) * (1 - t), -h + 2 * u - 68 * u * t], [(w / 2 + 16 * u) * (1 - t), -h + 2 * u - 68 * u * t]], false, 0.4 * u, 953 + r); ink(ctx, 1.4 * u, 0.4); }
+  // sign above the door, like the shop's
+  sketch(ctx, rectPts(-34 * u, -h - 30 * u, 68 * u, 22 * u), true, 0.5 * u, 960); fillInk(ctx, '#fff', 2.2 * u);
+  ctx.fillStyle = INK; ctx.font = `${14 * u}px ${HAND_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('MY CABIN', 0, -h - 18 * u);
+  // window with shutters + warm light
+  const wx = -64 * u, wy = -h + 18 * u, ww = 40 * u, wh = 34 * u;
+  sketch(ctx, rectPts(wx - 9 * u, wy, 8 * u, wh), true, 0.4 * u, 961); fillInk(ctx, '#3f7d4a', 1.8 * u);
+  sketch(ctx, rectPts(wx + ww + 1 * u, wy, 8 * u, wh), true, 0.4 * u, 962); fillInk(ctx, '#3f7d4a', 1.8 * u);
+  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.5 * u, 963); fillInk(ctx, '#ffe08a', 2.4 * u);
+  sketch(ctx, [[wx + ww / 2, wy], [wx + ww / 2, wy + wh]], false, 0.3 * u, 964); ink(ctx, 1.8 * u);
+  sketch(ctx, [[wx, wy + wh / 2], [wx + ww, wy + wh / 2]], false, 0.3 * u, 965); ink(ctx, 1.8 * u);
+  // door + step
+  const dx = 14 * u, dw = 38 * u, dh = 58 * u;
+  sketch(ctx, rectPts(dx, -dh, dw, dh), true, 0.5 * u, 966); fillInk(ctx, '#6e4426', 2.6 * u);
+  for (const lx of [dx + 12 * u, dx + 26 * u]) { sketch(ctx, [[lx, -dh + 4 * u], [lx, -4 * u]], false, 0.3 * u, 967 + lx); ink(ctx, 1.2 * u, 0.4); }
+  ctx.beginPath(); ctx.arc(dx + dw - 7 * u, -dh / 2, 2.8 * u, 0, Math.PI * 2); ctx.fillStyle = '#f2c94c'; ctx.fill(); ink(ctx, 1.4 * u);
+  sketch(ctx, rectPts(dx - 6 * u, -2 * u, dw + 12 * u, 8 * u), true, 0.4 * u, 970); fillInk(ctx, '#9aa3ad', 2 * u);
+  ctx.restore();
+  // chimney smoke (once it's standing)
+  if (rise >= 1) for (let i = 0; i < 3; i++) {
+    const k = (time * 0.5 + i / 3) % 1, sx = 46 * u + Math.sin(time + i) * 6 * u + k * 14 * u, sy = -6 * u - h - 70 * u - k * 50 * u;
+    ctx.globalAlpha = 0.55 * (1 - k);
+    sketch(ctx, ellipsePts(sx, sy, (6 + k * 10) * u, (5 + k * 8) * u, 14), true, 0.4 * u, 980 + i); ctx.fillStyle = '#fff'; ctx.fill(); ink(ctx, 1.4 * u, 0.5 * (1 - k));
+    ctx.globalAlpha = 1;
+  }
+  // building dust while it rises
+  if (rise < 1) for (let i = 0; i < 8; i++) {
+    const a = i / 8 * Math.PI * 2 + time * 3, r = (60 + rise * 50) * u;
+    ctx.globalAlpha = 0.6 * (1 - rise);
+    ctx.beginPath(); ctx.ellipse(Math.cos(a) * r, 20 * u + Math.sin(a) * 10 * u, 12 * u, 8 * u, 0, 0, Math.PI * 2); ctx.fillStyle = '#e8dcc6'; ctx.fill();
+    ctx.globalAlpha = 1;
+  }
 }
 
 // ---------- traveling merchant's mini shop (just left of the main shop) ----------
@@ -1449,6 +1541,32 @@ function handleGearButton(t) {
   return false;
 }
 
+// ---------- Property ----------
+const propertyEl = $('#property'), propertyBody = $('#propertyBody');
+function openProperty() {
+  if (S.property) {
+    propertyBody.innerHTML = `<p class="prop-text">This is your land, and your cabin is built! Nice place by the shop.</p>
+      <div class="prop-row"><button class="btn sketch btn-equip" data-close>Close</button></div>`;
+  } else {
+    const can = S.money >= PROPERTY_PRICE;
+    propertyBody.innerHTML = `<p class="prop-text">A plot of land right next to the shop. Buy it and a cozy cabin gets built on it.</p>
+      <div class="prop-price">${COIN()} ${fmt(PROPERTY_PRICE)}</div>
+      <div class="prop-row">
+        <button class="btn sketch ${can ? 'btn-buy' : 'btn-poor'}" data-buy-property>Buy it</button>
+        <button class="btn sketch" data-close>Not now</button>
+      </div>`;
+  }
+  openModal(propertyEl);
+}
+propertyEl.addEventListener('click', e => {
+  const t = e.target.closest('[data-buy-property]'); if (!t) return;
+  if (S.money < PROPERTY_PRICE) { cantAfford(t); return; }
+  S.money -= PROPERTY_PRICE; S.property = true; save();
+  cabinBuiltAt = time; // play the build animation
+  bumpMoney(); refreshHUD(); closeModal(propertyEl);
+  toast('You bought the property! Your cabin is being built...');
+});
+
 // ---------- Traveling merchant ----------
 function openMerchant() { renderMerchant(); openModal(merchantEl); setMoneyText(shownMoney); }
 function renderMerchant() {
@@ -1514,7 +1632,7 @@ document.querySelectorAll('[data-art-slot]').forEach(s => { s.innerHTML = ItemAr
 document.querySelectorAll('[data-acc]').forEach(s => s.addEventListener('click', () => toast('Accessories are coming soon!')));
 // On narrow screens, when the merchant is visiting, center between his stall and the shop
 // so both fit; otherwise center the shop.
-const shopViewCam = () => clampCam((merchant.here && W < 700 ? (L.shopX + merchantX()) / 2 : L.shopX) - W / 2);
+const shopViewCam = () => clampCam((W < 700 ? L.shopX - 110 * K : L.shopX) - W / 2);
 navShop.addEventListener('click', () => { camTarget = shopViewCam(); });
 navDock.addEventListener('click', () => { camTarget = 0; });
 
@@ -1542,7 +1660,8 @@ cv.addEventListener('pointermove', e => {
   }
   const wx = e.clientX + cam, wy = e.clientY;
   cubeHover = hitCube(wx, wy); merchantHover = hitMerchant(wx, wy); shopHover = !merchantHover && hitShop(wx, wy);
-  cv.style.cursor = (cubeHover || shopHover || merchantHover) ? 'pointer' : (ptr && ptr.moved ? 'grabbing' : 'default');
+  propHover = !merchantHover && !shopHover && hitProperty(wx, wy);
+  cv.style.cursor = (cubeHover || shopHover || merchantHover || propHover) ? 'pointer' : (ptr && ptr.moved ? 'grabbing' : 'default');
 });
 cv.addEventListener('pointerup', e => {
   if (ptr && !ptr.moved) {
@@ -1550,11 +1669,12 @@ cv.addEventListener('pointerup', e => {
     if (hitCube(wx, wy)) startFishing();
     else if (hitMerchant(wx, wy)) openMerchant();
     else if (hitShop(wx, wy)) openShop();
+    else if (hitProperty(wx, wy)) openProperty();
   }
   ptr = null;
 });
 cv.addEventListener('pointercancel', () => { ptr = null; });
-cv.addEventListener('pointerleave', () => { shopHover = cubeHover = merchantHover = false; });
+cv.addEventListener('pointerleave', () => { shopHover = cubeHover = merchantHover = propHover = false; });
 window.addEventListener('wheel', e => {
   if (modalOpen || revealOpen) return;
   e.preventDefault();

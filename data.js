@@ -8,6 +8,9 @@ window.GAME_DATA = {
   // Most of one item the backpack can hold (each item type stacks up to this).
   STACK_MAX: 20,
 
+  // The plot of land for sale next to the shop.
+  PROPERTY: { price: 500000 },
+
   // Day / night cycle, in seconds.
   DAY_SECONDS: 600,
   NIGHT_SECONDS: 600,
