@@ -282,16 +282,16 @@ function update(dt) {
       break;
     }
     case 'windup': {
-      // gentle backswing to just past straight up, instead of far behind the cube
-      const u = clamp(F.t / 0.32, 0, 1);
-      F.angle = lerp(F.aStart, -1.85, easeInOut(u));
-      tTilt = -0.1; tsx = 1.06; tsy = 0.94; tBend = -0.05;
+      // small lift (no backswing): the rod never swings behind the cube
+      const u = clamp(F.t / 0.18, 0, 1);
+      F.angle = lerp(F.aStart, -1.25, easeInOut(u));
+      tTilt = -0.06; tsx = 1.05; tsy = 0.95; tBend = 0;
       if (u >= 1) go('cast');
       break;
     }
     case 'cast': {
-      const u = clamp(F.t / 0.24, 0, 1);
-      F.angle = lerp(-1.85, -0.5, easeInOut(u));
+      const u = clamp(F.t / 0.22, 0, 1);
+      F.angle = lerp(-1.25, -0.5, easeInOut(u));
       tTilt = 0.15; tsx = 0.93; tsy = 1.08; tBend = 0.14;
       // launch from wherever the swinging bobber is right now, so it never jumps
       if (u >= 1) { F.from = [F.dangle.x, F.dangle.y]; go('flying'); }
@@ -354,19 +354,16 @@ function update(dt) {
   }
   if (C.poke > 0) { C.poke -= dt; tsx += Math.sin(C.poke * 40) * 0.05; tsy -= Math.sin(C.poke * 40) * 0.05; }
 
-  // The bobber hanging off the tip swings like a pendulum (verlet) instead of
-  // being glued below the tip; while it's flying or in the water it just follows F.bob.
+  // The bobber hanging off the tip eases toward its spot under the tip (a short,
+  // tight follow, never a loose swing); while flying or in the water it follows F.bob.
   const tipNow = rodTip(), ropeLen = 24 * K;
-  const D = F.dangle || (F.dangle = { x: tipNow[0], y: tipNow[1] + ropeLen, px: tipNow[0], py: tipNow[1] + ropeLen });
+  const D = F.dangle || (F.dangle = { x: tipNow[0], y: tipNow[1] + ropeLen });
   if (['flying', 'waiting', 'bite', 'reel'].includes(F.state)) {
-    D.x = D.px = F.bob.x; D.y = D.py = F.bob.y;
+    D.x = F.bob.x; D.y = F.bob.y;
   } else {
-    const ox = D.x, oy = D.y, keep = Math.max(0, 1 - 2.2 * dt);
-    D.x += (D.x - D.px) * keep;
-    D.y += (D.y - D.py) * keep + 1400 * K * dt * dt;
-    D.px = ox; D.py = oy;
-    const dx = D.x - tipNow[0], dy = D.y - tipNow[1], d = Math.hypot(dx, dy) || 1;
-    if (d > ropeLen) { D.x = tipNow[0] + dx / d * ropeLen; D.y = tipNow[1] + dy / d * ropeLen; }
+    const k = Math.min(1, dt * 22);
+    D.x += (tipNow[0] + Math.sin(time * 2) * 2 * K - D.x) * k;
+    D.y += (tipNow[1] + ropeLen - D.y) * k;
   }
   const sagTarget = F.state === 'waiting' ? 26 * K : F.state === 'flying' ? 14 * K : (F.state === 'bite' || F.state === 'reel') ? 0 : 3 * K;
   F.sag = approach(F.sag == null ? sagTarget : F.sag, sagTarget, dt * 10);
