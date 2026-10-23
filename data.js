@@ -80,10 +80,10 @@ window.GAME_DATA = {
   // colors: [shaft base, shaft tip], grip, accent (reel / tip)
   RODS: [
     { id: 'basic',      name: 'Basic Rod',      price: 0,        luck: 0,    speed: 1.00, colors: ['#8b5a2b', '#c99a62'], grip: '#3a3a3a', accent: '#c9c9c9', desc: 'Trusty old stick with a string.' },
-    { id: 'bamboo',     name: 'Bamboo Rod',     price: 2000,     luck: 0.2,  speed: 0.92, colors: ['#8fae3c', '#dfe98f'], grip: '#6b4f2a', accent: '#e8d9a8', desc: 'Light, bendy and eco-friendly.' },
-    { id: 'fiberglass', name: 'Fiberglass Rod', price: 10000,    luck: 0.5,  speed: 0.85, colors: ['#e9b52a', '#fff1a8'], grip: '#222222', accent: '#ff6b6b', desc: 'Bright yellow and tough as nails.' },
-    { id: 'steel',      name: 'Steel Rod',      price: 30000,    luck: 0.75, speed: 0.80, colors: ['#6f7c88', '#dfe6ec'], grip: '#2b2b33', accent: '#4aa3df', desc: 'Heavy duty. Will not snap.' },
-    { id: 'carbon',     name: 'Carbon Rod',     price: 75000,    luck: 1.0,  speed: 0.74, colors: ['#1e1e1e', '#5a5a5a'], grip: '#b3261e', accent: '#ff4d4d', desc: 'Pro-grade. Feels every nibble.' },
+    { id: 'bamboo',     name: 'Bamboo Rod',     price: 3000,     luck: 0.2,  speed: 0.92, colors: ['#8fae3c', '#dfe98f'], grip: '#6b4f2a', accent: '#e8d9a8', desc: 'Light, bendy and eco-friendly.' },
+    { id: 'fiberglass', name: 'Fiberglass Rod', price: 15000,    luck: 0.5,  speed: 0.85, colors: ['#e9b52a', '#fff1a8'], grip: '#222222', accent: '#ff6b6b', desc: 'Bright yellow and tough as nails.' },
+    { id: 'steel',      name: 'Steel Rod',      price: 45000,    luck: 0.75, speed: 0.80, colors: ['#6f7c88', '#dfe6ec'], grip: '#2b2b33', accent: '#4aa3df', desc: 'Heavy duty. Will not snap.' },
+    { id: 'carbon',     name: 'Carbon Rod',     price: 100000,    luck: 1.0,  speed: 0.74, colors: ['#1e1e1e', '#5a5a5a'], grip: '#b3261e', accent: '#ff4d4d', desc: 'Pro-grade. Feels every nibble.' },
     { id: 'golden',     name: 'Golden Rod',     price: 250000,   luck: 1.8,  speed: 0.66, colors: ['#c8920c', '#ffe680'], grip: '#5a3b0a', accent: '#ffffff', desc: 'Shiny! Fish love shiny.' },
     { id: 'crystal',    name: 'Crystal Rod',    price: 500000,   luck: 3.0,  speed: 0.58, colors: ['#5ec8ff', '#e6fbff'], grip: '#3d2a7a', accent: '#c59bff', desc: 'Hums softly near rare things.', sparkle: true },
     { id: 'cosmic',     name: 'Cosmic Rod',     price: 900000,   luck: 4.5,  speed: 0.50, colors: ['#3a1c71', '#ff8fb1'], grip: '#101030', accent: '#ffd36e', desc: 'Forged from a shooting star.', sparkle: true },
@@ -104,11 +104,11 @@ window.GAME_DATA = {
   // Bait is bought in packs of `uses` casts.
   // speed: bite-wait multiplier, stacks with the rod (0.5 = bites come 2x faster).
   BAITS: [
-    { id: 'worm',     name: 'Worms',         emoji: '🪱', price: 75,     uses: 10, luck: 0.10, speed: 0.90, desc: 'Classic. Wiggly.' },
-    { id: 'cricket',  name: 'Crickets',      emoji: '🦗', price: 300,    uses: 10, luck: 0.25, speed: 0.85, desc: 'Crunchy and chirpy.' },
-    { id: 'cheese',   name: 'Stinky Cheese', emoji: '🧀', price: 1000,   uses: 10, luck: 0.50, speed: 0.80, desc: 'Smells awful. Works great.' },
-    { id: 'clover',   name: 'Lucky Clover',  emoji: '🍀', price: 2500,   uses: 10, luck: 0.70, speed: 0.75, desc: 'Four leaves. Very lucky.' },
-    { id: 'glow',     name: 'Glow Bait',     emoji: '✨', price: 5000,   uses: 10, luck: 0.90, speed: 0.70, desc: 'Lights up the deep water.' },
+    { id: 'worm',     name: 'Worms',         emoji: '🪱', price: 120,     uses: 10, luck: 0.10, speed: 0.90, desc: 'Classic. Wiggly.' },
+    { id: 'cricket',  name: 'Crickets',      emoji: '🦗', price: 450,    uses: 10, luck: 0.25, speed: 0.85, desc: 'Crunchy and chirpy.' },
+    { id: 'cheese',   name: 'Stinky Cheese', emoji: '🧀', price: 1500,   uses: 10, luck: 0.50, speed: 0.80, desc: 'Smells awful. Works great.' },
+    { id: 'clover',   name: 'Lucky Clover',  emoji: '🍀', price: 3500,   uses: 10, luck: 0.70, speed: 0.75, desc: 'Four leaves. Very lucky.' },
+    { id: 'glow',     name: 'Glow Bait',     emoji: '✨', price: 7000,   uses: 10, luck: 0.90, speed: 0.70, desc: 'Lights up the deep water.' },
     { id: 'goldbait', name: 'Golden Bait',   emoji: '🌟', price: 15000,  uses: 10, luck: 1.40, speed: 0.60, desc: 'Only the fanciest fish bite.' },
     { id: 'stardust', name: 'Stardust',      emoji: '💫', price: 50000,  uses: 10, luck: 2.00, speed: 0.50, desc: 'A pinch of the universe.' },
     { id: 'jelly',    name: 'Rainbow Jelly', emoji: '🌈', price: 120000, uses: 10, luck: 2.60, speed: 0.42, desc: 'Jiggly, glowing, irresistible.' },
