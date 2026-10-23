@@ -337,7 +337,8 @@ function update(dt) {
       F.reelSpin += dt * 30;
       const tp = rodTip();
       F.bob.x = lerp(F.reelFrom[0], tp[0], easeOutCubic(u));
-      F.bob.y = lerp(F.reelFrom[1], tp[1] + 24 * K, easeOutCubic(u)) - Math.sin(Math.PI * u) * 60 * K;
+      // bobber comes straight in and always stays below the tip, so the string never flips over the rod
+      F.bob.y = Math.max(lerp(F.reelFrom[1], tp[1] + 24 * K, easeOutCubic(u)) - Math.sin(Math.PI * u) * 12 * K, tp[1] + 8 * K);
       if (u >= 1) go('lift');
       break;
     }
