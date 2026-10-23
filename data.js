@@ -109,18 +109,18 @@ window.GAME_DATA = {
   // Bait is bought in packs of `uses` casts.
   // speed: bite-wait multiplier, stacks with the rod (0.5 = bites come 2x faster).
   BAITS: [
-    { id: 'worm',     name: 'Worms',         emoji: '🪱', price: 120,     uses: 10, luck: 0.10, speed: 0.90, desc: 'Classic. Wiggly.' },
-    { id: 'cricket',  name: 'Crickets',      emoji: '🦗', price: 450,    uses: 10, luck: 0.25, speed: 0.85, desc: 'Crunchy and chirpy.' },
-    { id: 'cheese',   name: 'Stinky Cheese', emoji: '🧀', price: 1500,   uses: 10, luck: 0.50, speed: 0.80, desc: 'Smells awful. Works great.' },
-    { id: 'clover',   name: 'Lucky Clover',  emoji: '🍀', price: 3500,   uses: 10, luck: 0.70, speed: 0.75, desc: 'Four leaves. Very lucky.' },
-    { id: 'glow',     name: 'Glow Bait',     emoji: '✨', price: 7000,   uses: 10, luck: 0.90, speed: 0.70, desc: 'Lights up the deep water.' },
-    { id: 'goldbait', name: 'Golden Bait',   emoji: '🌟', price: 15000,  uses: 10, luck: 1.40, speed: 0.60, desc: 'Only the fanciest fish bite.' },
-    { id: 'stardust', name: 'Stardust',      emoji: '💫', price: 50000,  uses: 10, luck: 2.00, speed: 0.50, desc: 'A pinch of the universe.' },
-    { id: 'jelly',    name: 'Rainbow Jelly', emoji: '🌈', price: 120000, uses: 10, luck: 2.60, speed: 0.42, desc: 'Jiggly, glowing, irresistible.' },
-    { id: 'comet',    name: 'Comet Chunk',   emoji: '☄️', price: 300000, uses: 10, luck: 3.30, speed: 0.35, desc: 'A piece of a passing comet.' },
+    { id: 'worm',     name: 'Worms',         emoji: '🪱', price: 120,     uses: 20, luck: 0.10, speed: 0.90, desc: 'Classic. Wiggly.' },
+    { id: 'cricket',  name: 'Crickets',      emoji: '🦗', price: 450,    uses: 20, luck: 0.25, speed: 0.85, desc: 'Crunchy and chirpy.' },
+    { id: 'cheese',   name: 'Stinky Cheese', emoji: '🧀', price: 1500,   uses: 20, luck: 0.50, speed: 0.80, desc: 'Smells awful. Works great.' },
+    { id: 'clover',   name: 'Lucky Clover',  emoji: '🍀', price: 3500,   uses: 20, luck: 0.70, speed: 0.75, desc: 'Four leaves. Very lucky.' },
+    { id: 'glow',     name: 'Glow Bait',     emoji: '✨', price: 7000,   uses: 20, luck: 0.90, speed: 0.70, desc: 'Lights up the deep water.' },
+    { id: 'goldbait', name: 'Golden Bait',   emoji: '🌟', price: 15000,  uses: 20, luck: 1.40, speed: 0.60, desc: 'Only the fanciest fish bite.' },
+    { id: 'stardust', name: 'Stardust',      emoji: '💫', price: 50000,  uses: 20, luck: 2.00, speed: 0.50, desc: 'A pinch of the universe.' },
+    { id: 'jelly',    name: 'Rainbow Jelly', emoji: '🌈', price: 120000, uses: 20, luck: 2.60, speed: 0.42, desc: 'Jiggly, glowing, irresistible.' },
+    { id: 'comet',    name: 'Comet Chunk',   emoji: '☄️', price: 300000, uses: 20, luck: 3.30, speed: 0.35, desc: 'A piece of a passing comet.' },
     // Traveling merchant only
-    { id: 'mystery',  name: 'Mystery Bait',  emoji: '❓', price: 120000, uses: 10, luck: 2.80, speed: 0.42, desc: 'Nobody knows what is in it. Fish love it.', merchant: true },
-    { id: 'goldlure', name: 'Golden Lure',   emoji: '🪝', price: 400000, uses: 10, luck: 4.00, speed: 0.32, desc: 'A shiny lure that never runs dry of luck.', merchant: true },
-    { id: 'krakenink',name: 'Kraken Ink',    emoji: '🦑', price: 900000, uses: 10, luck: 5.50, speed: 0.26, desc: 'One drop and the deep wakes up.', merchant: true },
+    { id: 'mystery',  name: 'Mystery Bait',  emoji: '❓', price: 120000, uses: 20, luck: 2.80, speed: 0.42, desc: 'Nobody knows what is in it. Fish love it.', merchant: true },
+    { id: 'goldlure', name: 'Golden Lure',   emoji: '🪝', price: 400000, uses: 20, luck: 4.00, speed: 0.32, desc: 'A shiny lure that never runs dry of luck.', merchant: true },
+    { id: 'krakenink',name: 'Kraken Ink',    emoji: '🦑', price: 900000, uses: 20, luck: 5.50, speed: 0.26, desc: 'One drop and the deep wakes up.', merchant: true },
   ],
 };
