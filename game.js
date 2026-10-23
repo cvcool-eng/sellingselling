@@ -937,7 +937,7 @@ function drawInterior() {
   }
   // door in the right wall (the entrance), drawn in perspective
   const dt0 = 0.3, dt1 = 0.78; // how far along the wall (back -> front)
-  const pX = t => lerp(bx + bw, x + rw, t), pB = t => lerp(floorTop, fb, t), pT = t => y + (lerp(floorTop, fb, t) - y) * 0.2;
+  const pX = t => lerp(bx + bw, x + rw, t), pB = t => lerp(floorTop, fb, t), pT = t => y + (lerp(floorTop, fb, t) - y) * 0.34;
   const door = [[pX(dt0), pT(dt0)], [pX(dt1), pT(dt1)], [pX(dt1), pB(dt1)], [pX(dt0), pB(dt0)]];
   const frame = [[pX(dt0 - 0.03), pT(dt0 - 0.03) - 6 * R], [pX(dt1 + 0.03), pT(dt1 + 0.03) - 6 * R], [pX(dt1 + 0.03), pB(dt1 + 0.03)], [pX(dt0 - 0.03), pB(dt0 - 0.03)]];
   sketch(ctx, frame, true, 0.4 * R, 1014); fillInk(ctx, '#3d2414', 2.4 * R);
