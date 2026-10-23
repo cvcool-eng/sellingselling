@@ -294,7 +294,9 @@ function update(dt) {
       F.angle = lerp(-1.25, -0.5, easeInOut(u));
       tTilt = 0.15; tsx = 0.93; tsy = 1.08; tBend = 0.14;
       // launch from wherever the swinging bobber is right now, so it never jumps
-      if (u >= 1) { F.from = [F.dangle.x, F.dangle.y]; go('flying'); }
+      // set F.bob right away too: the 'flying' case only runs next frame, and drawing
+      // the line to the old F.bob for one frame made it flash off behind the cube
+      if (u >= 1) { F.from = [F.dangle.x, F.dangle.y]; F.bob.x = F.from[0]; F.bob.y = F.from[1]; go('flying'); }
       break;
     }
     case 'flying': {
