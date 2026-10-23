@@ -344,6 +344,8 @@ img.art.coin-ic, .coin-slot img.art { display: inline-block; width: 1.05em; heig
   .tab { font-size: 17px; }
   .panel-head h2 { font-size: 25px; }
   .nav-btn { font-size: 18px; }
+  /* phones: keep the Shop/Dock buttons off the cube and dock, just above the bottom bar */
+  .nav-btn { top: auto; bottom: calc(116px + env(safe-area-inset-bottom, 0px)); }
   #toast { bottom: 104px; }
 }
 
