@@ -270,6 +270,10 @@ body.shake canvas#world { animation: shake .45s; }
 /* Merchant cards */
 .card.exclusive { background: #f7f0ff; }
 .card .tag { font-size: 12px; background: #b085f5; color: #fff; border: 2px solid var(--ink); border-radius: 8px; padding: 0 6px; transform: rotate(-3deg); }
+.card .tag.sale { background: #e5383b; font-size: 14px; animation: salePulse 1.2s ease-in-out infinite; }
+.card.deal { background: #fff4f4; border-color: #e5383b; }
+.old-price { color: #c0392b; opacity: .75; text-decoration-thickness: 2px; }
+@keyframes salePulse { 50% { transform: rotate(-3deg) scale(1.1); } }
 
 /* Title screen */
 #title { position: fixed; inset: 0; z-index: 200; cursor: pointer; background: #fff; overflow: hidden; }

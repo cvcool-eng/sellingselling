@@ -97,7 +97,11 @@ const merchantVisits = day => mulberry(day * 7919 + 101)() < MERCHANT.chance;
 function merchantStock(day) {
   const r = mulberry(day * 31337 + 7);
   const pick = (arr, n) => arr.map(x => [r(), x]).sort((a, b) => a[0] - b[0]).slice(0, n).map(p => p[1]);
-  return { rods: pick(RODS.filter(x => x.merchant), MERCHANT.rods), baits: pick(BAITS.filter(x => x.merchant), MERCHANT.baits) };
+  return {
+    rods: pick(RODS.filter(x => x.merchant && !x.deal), MERCHANT.rods),
+    baits: pick(BAITS.filter(x => x.merchant), MERCHANT.baits),
+    deals: RODS.filter(x => x.deal).slice(0, MERCHANT.deals || 0), // cheapest deal first
+  };
 }
 const mmss = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 window.SellingSelling = { setClockOffset: s => { clockOffset = s; } };
@@ -1361,14 +1365,17 @@ function doSell(btn) {
   bumpMoney(); refreshHUD(); renderShop();
 }
 function speedText(r) { return r.speed && r.speed < 1 ? `${+(1 / r.speed).toFixed(1)}x faster` : 'normal speed'; }
-const exclusiveTag = x => x.merchant ? '<span class="tag">Merchant exclusive</span>' : '';
+const exclusiveTag = x => x.deal
+  ? `<span class="tag sale">SALE −${Math.round((1 - x.price / x.oldPrice) * 100)}%</span>`
+  : x.merchant ? '<span class="tag">Merchant exclusive</span>' : '';
 function rodCard(r) {
   const owned = S.ownedRods.includes(r.id), eq = S.rod === r.id;
+  const was = r.oldPrice ? `<s class="old-price">${fmt(r.oldPrice)}</s> ` : '';
   let btn;
   if (eq) btn = `<button class="btn sketch btn-equipped" disabled>Equipped ✓</button>`;
   else if (owned) btn = `<button class="btn sketch btn-equip" data-equip-rod="${r.id}">Equip</button>`;
-  else btn = `<button class="btn sketch ${S.money >= r.price ? 'btn-buy' : 'btn-poor'}" data-buy-rod="${r.id}">Buy · ${COIN()} ${fmt(r.price)}</button>`;
-  return `<div class="card ${eq ? 'equipped' : ''} ${r.merchant ? 'exclusive' : ''}">${exclusiveTag(r)}
+  else btn = `<button class="btn sketch ${S.money >= r.price ? 'btn-buy' : 'btn-poor'}" data-buy-rod="${r.id}">Buy · ${COIN()} ${was}${fmt(r.price)}</button>`;
+  return `<div class="card ${eq ? 'equipped' : ''} ${r.merchant ? 'exclusive' : ''} ${r.deal ? 'deal' : ''}">${exclusiveTag(r)}
     <canvas width="240" height="160" data-rod="${r.id}"></canvas>
     <div class="card-name">${r.name}</div><div class="card-desc">${r.desc}</div>
     <div class="stats"><span>🍀 +${Math.round(r.luck * 100)}% luck</span><span>⚡ ${speedText(r)}</span></div>${btn}</div>`;
@@ -1423,7 +1430,7 @@ function openMerchant() { renderMerchant(); openModal(merchantEl); setMoneyText(
 function renderMerchant() {
   const ck = clock(), st = merchantStock(ck.day);
   merchantBody.innerHTML = `<p class="tab-intro">Rare goods from far away, and not cheap! I pack up when night falls, in <b id="merchantLeft">${mmss(ck.left)}</b>.</p>
-    <div class="cards">${st.rods.map(rodCard).join('')}${st.baits.map(baitCard).join('')}</div>`;
+    <div class="cards">${st.deals.map(rodCard).join('')}${st.rods.map(rodCard).join('')}${st.baits.map(baitCard).join('')}</div>`;
   merchantBody.querySelectorAll('canvas[data-rod]').forEach(c => drawRodIcon(c, ROD[c.dataset.rod], 'shop'));
 }
 merchantEl.addEventListener('click', e => {

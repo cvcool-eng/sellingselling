@@ -11,7 +11,8 @@ window.GAME_DATA = {
 
   // Traveling merchant: chance to show up each morning, and how many of his
   // rods / baits he brings per visit (picked from the `merchant: true` entries below).
-  MERCHANT: { chance: 0.10, rods: 2, baits: 2 },
+  // `deals` = how many sale rods (the `deal: true` ones) he brings each visit.
+  MERCHANT: { chance: 0.10, rods: 2, baits: 2, deals: 5 },
 
   // Worst -> best. "weight" = base chance (out of the total of all weights).
   RARITIES: [
@@ -27,52 +28,52 @@ window.GAME_DATA = {
   // rarity: index into RARITIES (0 = Common ... 6 = Mythic). price = sell value.
   ITEMS: [
     // Common
-    { id: 'boot',     name: 'Old Boot',            emoji: '👢', rarity: 0, price: 3 },
-    { id: 'can',      name: 'Tin Can',             emoji: '🥫', rarity: 0, price: 2 },
-    { id: 'seaweed',  name: 'Clump of Seaweed',    emoji: '🌿', rarity: 0, price: 2 },
-    { id: 'stick',    name: 'Soggy Stick',         emoji: '🪵', rarity: 0, price: 3 },
-    { id: 'sock',     name: 'Wet Sock',            emoji: '🧦', rarity: 0, price: 4 },
-    { id: 'sardine',  name: 'Sardine',             emoji: '🐟', rarity: 0, price: 6 },
-    { id: 'rock',     name: 'Smooth Rock',         emoji: '🪨', rarity: 0, price: 3 },
+    { id: 'boot',     name: 'Old Boot',            emoji: '👢', rarity: 0, price: 30 },
+    { id: 'can',      name: 'Tin Can',             emoji: '🥫', rarity: 0, price: 20 },
+    { id: 'seaweed',  name: 'Clump of Seaweed',    emoji: '🌿', rarity: 0, price: 20 },
+    { id: 'stick',    name: 'Soggy Stick',         emoji: '🪵', rarity: 0, price: 30 },
+    { id: 'sock',     name: 'Wet Sock',            emoji: '🧦', rarity: 0, price: 40 },
+    { id: 'sardine',  name: 'Sardine',             emoji: '🐟', rarity: 0, price: 60 },
+    { id: 'rock',     name: 'Smooth Rock',         emoji: '🪨', rarity: 0, price: 30 },
     // Uncommon
-    { id: 'ham',      name: 'Piece of Ham',        emoji: '🍖', rarity: 1, price: 14 },
-    { id: 'crab',     name: 'Crab',                emoji: '🦀', rarity: 1, price: 16 },
-    { id: 'shrimp',   name: 'Shrimp',              emoji: '🦐', rarity: 1, price: 12 },
-    { id: 'duck',     name: 'Rubber Duck',         emoji: '🦆', rarity: 1, price: 15 },
-    { id: 'frog',     name: 'Frog',                emoji: '🐸', rarity: 1, price: 18 },
-    { id: 'teddy',    name: 'Soggy Teddy Bear',    emoji: '🧸', rarity: 1, price: 12 },
-    { id: 'pizza',    name: 'Slice of Pizza',      emoji: '🍕', rarity: 1, price: 10 },
+    { id: 'ham',      name: 'Piece of Ham',        emoji: '🍖', rarity: 1, price: 140 },
+    { id: 'crab',     name: 'Crab',                emoji: '🦀', rarity: 1, price: 160 },
+    { id: 'shrimp',   name: 'Shrimp',              emoji: '🦐', rarity: 1, price: 120 },
+    { id: 'duck',     name: 'Rubber Duck',         emoji: '🦆', rarity: 1, price: 150 },
+    { id: 'frog',     name: 'Frog',                emoji: '🐸', rarity: 1, price: 180 },
+    { id: 'teddy',    name: 'Soggy Teddy Bear',    emoji: '🧸', rarity: 1, price: 120 },
+    { id: 'pizza',    name: 'Slice of Pizza',      emoji: '🍕', rarity: 1, price: 100 },
     // Rare
-    { id: 'puffer',   name: 'Pufferfish',          emoji: '🐡', rarity: 2, price: 45 },
-    { id: 'octopus',  name: 'Octopus',             emoji: '🐙', rarity: 2, price: 55 },
-    { id: 'lobster',  name: 'Lobster',             emoji: '🦞', rarity: 2, price: 60 },
-    { id: 'squid',    name: 'Squid',               emoji: '🦑', rarity: 2, price: 50 },
-    { id: 'turtle',   name: 'Turtle',              emoji: '🐢', rarity: 2, price: 70 },
-    { id: 'bottle',   name: 'Message in a Bottle', emoji: '🍾', rarity: 2, price: 40 },
+    { id: 'puffer',   name: 'Pufferfish',          emoji: '🐡', rarity: 2, price: 450 },
+    { id: 'octopus',  name: 'Octopus',             emoji: '🐙', rarity: 2, price: 550 },
+    { id: 'lobster',  name: 'Lobster',             emoji: '🦞', rarity: 2, price: 600 },
+    { id: 'squid',    name: 'Squid',               emoji: '🦑', rarity: 2, price: 500 },
+    { id: 'turtle',   name: 'Turtle',              emoji: '🐢', rarity: 2, price: 700 },
+    { id: 'bottle',   name: 'Message in a Bottle', emoji: '🍾', rarity: 2, price: 400 },
     // Cool
-    { id: 'tropical', name: 'Tropical Fish',       emoji: '🐠', rarity: 3, price: 110 },
-    { id: 'shades',   name: 'Pair of Sunglasses',  emoji: '🕶️', rarity: 3, price: 130 },
-    { id: 'skate',    name: 'Skateboard',          emoji: '🛹', rarity: 3, price: 150 },
-    { id: 'guitar',   name: 'Electric Guitar',     emoji: '🎸', rarity: 3, price: 180 },
-    { id: 'gamepad',  name: 'Game Controller',     emoji: '🎮', rarity: 3, price: 160 },
-    { id: 'coin',     name: 'Gold Coin',           emoji: '🪙', rarity: 3, price: 120 },
+    { id: 'tropical', name: 'Tropical Fish',       emoji: '🐠', rarity: 3, price: 1100 },
+    { id: 'shades',   name: 'Pair of Sunglasses',  emoji: '🕶️', rarity: 3, price: 1300 },
+    { id: 'skate',    name: 'Skateboard',          emoji: '🛹', rarity: 3, price: 1500 },
+    { id: 'guitar',   name: 'Electric Guitar',     emoji: '🎸', rarity: 3, price: 1800 },
+    { id: 'gamepad',  name: 'Game Controller',     emoji: '🎮', rarity: 3, price: 1600 },
+    { id: 'coin',     name: 'Gold Coin',           emoji: '🪙', rarity: 3, price: 1200 },
     // Awesome
-    { id: 'shark',    name: 'Shark',               emoji: '🦈', rarity: 4, price: 320 },
-    { id: 'gold',     name: 'Bag of Gold',         emoji: '💰', rarity: 4, price: 350 },
-    { id: 'diamond',  name: 'Diamond',             emoji: '💎', rarity: 4, price: 400 },
-    { id: 'trophy',   name: 'Golden Trophy',       emoji: '🏆', rarity: 4, price: 300 },
-    { id: 'robot',    name: 'Robot',               emoji: '🤖', rarity: 4, price: 360 },
-    { id: 'rocket',   name: 'Toy Rocket',          emoji: '🚀', rarity: 4, price: 280 },
+    { id: 'shark',    name: 'Shark',               emoji: '🦈', rarity: 4, price: 3200 },
+    { id: 'gold',     name: 'Bag of Gold',         emoji: '💰', rarity: 4, price: 3500 },
+    { id: 'diamond',  name: 'Diamond',             emoji: '💎', rarity: 4, price: 4000 },
+    { id: 'trophy',   name: 'Golden Trophy',       emoji: '🏆', rarity: 4, price: 3000 },
+    { id: 'robot',    name: 'Robot',               emoji: '🤖', rarity: 4, price: 3600 },
+    { id: 'rocket',   name: 'Toy Rocket',          emoji: '🚀', rarity: 4, price: 2800 },
     // Legendary
-    { id: 'crown',    name: 'Royal Crown',         emoji: '👑', rarity: 5, price: 1100 },
-    { id: 'whale',    name: 'Whale',               emoji: '🐋', rarity: 5, price: 1300 },
-    { id: 'trident',  name: 'Ancient Trident',     emoji: '🔱', rarity: 5, price: 1500 },
-    { id: 'dolphin',  name: 'Dolphin',             emoji: '🐬', rarity: 5, price: 1000 },
+    { id: 'crown',    name: 'Royal Crown',         emoji: '👑', rarity: 5, price: 11000 },
+    { id: 'whale',    name: 'Whale',               emoji: '🐋', rarity: 5, price: 13000 },
+    { id: 'trident',  name: 'Ancient Trident',     emoji: '🔱', rarity: 5, price: 15000 },
+    { id: 'dolphin',  name: 'Dolphin',             emoji: '🐬', rarity: 5, price: 10000 },
     // Mythic
-    { id: 'unicorn',  name: 'Unicorn',             emoji: '🦄', rarity: 6, price: 1600 },
-    { id: 'star',     name: 'Fallen Star',         emoji: '🌟', rarity: 6, price: 1850 },
-    { id: 'ufo',      name: 'UFO',                 emoji: '🛸', rarity: 6, price: 2000 },
-    { id: 'rainbow',  name: 'Rainbow',             emoji: '🌈', rarity: 6, price: 1750 },
+    { id: 'unicorn',  name: 'Unicorn',             emoji: '🦄', rarity: 6, price: 16000 },
+    { id: 'star',     name: 'Fallen Star',         emoji: '🌟', rarity: 6, price: 18500 },
+    { id: 'ufo',      name: 'UFO',                 emoji: '🛸', rarity: 6, price: 20000 },
+    { id: 'rainbow',  name: 'Rainbow',             emoji: '🌈', rarity: 6, price: 17500 },
   ],
 
   // luck: +luck (0.2 = +20%). speed: wait-time multiplier (lower = faster bites).
@@ -92,6 +93,12 @@ window.GAME_DATA = {
     { id: 'tidecaller', name: 'Tidecaller Rod', price: 650000,   luck: 4.0,  speed: 0.48, colors: ['#0f6e8c', '#7ff0e0'], grip: '#0b3340', accent: '#e9fffb', desc: 'Calls the rare ones in with the tide.', sparkle: true, merchant: true },
     { id: 'starfall',   name: 'Starfall Rod',   price: 3000000,  luck: 7.0,  speed: 0.40, colors: ['#1b1f5e', '#ffe680'], grip: '#0d0f30', accent: '#fff3b0', desc: 'Made from a star that fell in a pond.', sparkle: true, merchant: true },
     { id: 'rainbowrod', name: 'Rainbow Rod',    price: 9000000,  luck: 12.0, speed: 0.30, colors: ['#ff5f6d', '#7fd8ff'], grip: '#3d2a7a', accent: '#ffe066', desc: 'The best rod there is. Very hard to find.', sparkle: true, merchant: true },
+    // Traveling merchant sale rods: shown as `oldPrice` crossed out, sold for `price`
+    { id: 'coralcrown', name: 'Coral Crown Rod',     oldPrice: 1500000,  price: 120000, luck: 4.0, speed: 0.48, colors: ['#ff6f91', '#ffd1dc'], grip: '#6b1f3a', accent: '#ffe066', desc: 'Grown on a reef fit for a king.', sparkle: true, merchant: true, deal: true },
+    { id: 'sunken',     name: 'Sunken Treasure Rod', oldPrice: 3000000,  price: 200000, luck: 5.0, speed: 0.45, colors: ['#0f5f6e', '#ffd36e'], grip: '#3b2a12', accent: '#ffe680', desc: 'Pulled up from a shipwreck. He wants it gone.', sparkle: true, merchant: true, deal: true },
+    { id: 'thunder',    name: 'Thunder Rod',         oldPrice: 5000000,  price: 350000, luck: 6.0, speed: 0.42, colors: ['#2b2f6b', '#ffef5a'], grip: '#14162e', accent: '#9be7ff', desc: 'Crackles when a big one bites.', sparkle: true, merchant: true, deal: true },
+    { id: 'frostbite',  name: 'Frostbite Rod',       oldPrice: 7500000,  price: 500000, luck: 7.5, speed: 0.40, colors: ['#5ec8ff', '#ffffff'], grip: '#1d3557', accent: '#bdf0ff', desc: 'So cold the fish freeze in surprise.', sparkle: true, merchant: true, deal: true },
+    { id: 'galaxy',     name: 'Galaxy Rod',          oldPrice: 12000000, price: 900000, luck: 9.0, speed: 0.36, colors: ['#1a0b3d', '#c77dff'], grip: '#0b0620', accent: '#ffd6ff', desc: 'Holds a whole galaxy in the handle.', sparkle: true, merchant: true, deal: true },
   ],
 
   // Bait is bought in packs of `uses` casts.
