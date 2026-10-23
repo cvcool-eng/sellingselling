@@ -354,3 +354,20 @@ img.art.coin-ic, .coin-slot img.art { display: inline-block; width: 1.05em; heig
   .modal { padding-bottom: 0; }
   .modal .panel { height: calc(100vh - 24px); }
 }
+
+/* Phones held sideways: very little height, so shrink the bars */
+@media (max-height: 450px) {
+  #hud-top { top: 6px; }
+  .title { font-size: 14px; padding: 0 8px; }
+  .pill { font-size: 17px; padding: 0 10px; }
+  .pill.small { font-size: 13px; padding: 0 8px; }
+  .hud-right { gap: 4px; }
+  #hotbar { gap: 6px; padding: 13px 8px 6px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
+  .slot { width: 46px; height: 46px; }
+  .slot canvas { width: 38px; height: 38px; }
+  .slot-emoji img.art { width: 34px; height: 34px; }
+  .slot-label { font-size: 10px; line-height: 13px; top: -10px; }
+  #backpack { width: 52px; height: 52px; }
+  .nav-btn { top: auto; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 3px 10px; }
+  #toast { bottom: 78px; }
+}

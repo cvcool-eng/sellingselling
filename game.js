@@ -159,7 +159,8 @@ function resize() {
   W = window.innerWidth; H = window.innerHeight;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   cv.style.width = W + 'px'; cv.style.height = H + 'px';
-  K = clamp(Math.min(W / 1100, H / 720), 0.6, 1.35);
+  // scale of the world; narrow phones get a bigger scale so the cube and shop aren't tiny
+  K = clamp(Math.min(W / (W < 600 ? 520 : 1100), H / 720), 0.6, 1.35);
   layout();
   camTarget = clampCam(camTarget); cam = clampCam(cam);
 }
@@ -182,7 +183,8 @@ function layout() {
 
   L.shopX = -Math.max(W * 0.5, 300 * K);
   L.shopBase = L.groundY + 75 * K;
-  L.minCam = L.shopX - W / 2 - 80 * K;
+  // far enough left to show the merchant's stall (just left of the shop) even on phones
+  L.minCam = Math.min(L.shopX - W / 2 - 80 * K, L.shopX - 240 * K - 110 * K);
   L.worldL = L.minCam - 120; L.worldR = W + 120;
   buildDecor();
 }
@@ -1488,7 +1490,10 @@ slotRod.addEventListener('click', openBag);
 slotBait.addEventListener('click', openBag);
 document.querySelectorAll('[data-art-slot]').forEach(s => { s.innerHTML = ItemArt.html(s.dataset.artSlot, ''); });
 document.querySelectorAll('[data-acc]').forEach(s => s.addEventListener('click', () => toast('Accessories are coming soon!')));
-navShop.addEventListener('click', () => { camTarget = clampCam(L.shopX - W / 2); });
+// On narrow screens, when the merchant is visiting, center between his stall and the shop
+// so both fit; otherwise center the shop.
+const shopViewCam = () => clampCam((merchant.here && W < 700 ? (L.shopX + merchantX()) / 2 : L.shopX) - W / 2);
+navShop.addEventListener('click', () => { camTarget = shopViewCam(); });
 navDock.addEventListener('click', () => { camTarget = 0; });
 
 // ============================================================

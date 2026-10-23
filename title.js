@@ -63,13 +63,14 @@ function resize() {
   bloom.width = Math.max(1, Math.round(W / 4)); bloom.height = Math.max(1, Math.round(H / 4));
   // Camera sits low on the water just left of the fish, a bit back from the dock,
   // looking up: low horizon, the cube up on the dock, the fish big on the right.
-  L.horizon = H * 0.9;           // camera right down at the water line
-  L.deckTop = H * 0.6;
+  const tall = H > W * 1.2;      // phones held upright: pull the scene up so the sky isn't empty
+  L.horizon = H * (tall ? 0.8 : 0.9); // camera right down at the water line
+  L.deckTop = H * (tall ? 0.5 : 0.6);
   L.cubeX = W * (W > H ? 0.27 : 0.25);
   L.S = 23 * U;                  // a little closer to the dock
   L.sunX = W * 0.52; L.sunY = H * 0.22;
   L.fishX = W * (W > H ? 0.8 : 0.74);
-  L.surf = H * 0.985;
+  L.surf = H * (tall ? 0.88 : 0.985);
   L.FS = 1.45; // fish is close to the camera, so it reads big
 }
 
