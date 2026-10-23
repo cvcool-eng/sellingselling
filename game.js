@@ -959,7 +959,7 @@ function drawInterior() {
   sketch(ctx, [[wx + ww / 2, wy], [wx + ww / 2, wy + wh]], false, 0.3 * R, 1021); ink(ctx, 3.5 * R);
   sketch(ctx, [[wx, wy + wh / 2], [wx + ww, wy + wh / 2]], false, 0.3 * R, 1022); ink(ctx, 3.5 * R);
   sketch(ctx, rectPts(wx - 8 * R, wy + wh, ww + 16 * R, 8 * R), true, 0.3 * R, 1023); fillInk(ctx, '#8b5a2b', 2 * R);
-  drawPhoto(bx + 250 * R, y + 36 * R, 64 * R, 48 * R, 0, R);
+  drawPhoto(wx - 100 * R, y + 36 * R, 64 * R, 48 * R, 0, R); // left of the window, clear of it
   drawPhoto(wx + ww + 26 * R, y + 30 * R, 74 * R, 54 * R, 2, R);
   drawPhoto(wx + ww + 40 * R, y + 100 * R, 50 * R, 38 * R, 1, R);
 
