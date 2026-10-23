@@ -864,91 +864,147 @@ function drawCabin(u) {
 
 // ---------- inside the cabin: a cozy room with a bed and a desk ----------
 let insideCabin = false, bedHover = false, deskHover = false;
+// Stardew-style room: seen from above at an angle, filling most of the screen,
+// with a log back wall (window + framed photos) and a plank floor.
 function room() {
-  const bottom = H - 110;
-  const R = clamp(Math.min(W / 900, (bottom - 60) / 520), 0.45, 1.4);
-  const cx = W / 2, floorY = bottom - 150 * R;
+  const avail = H - 110;
+  const R = clamp(Math.min((W - 24) / 820, (avail - 24) / 560), 0.4, 1.5);
+  const rw = 820 * R, rh = 560 * R, x = (W - rw) / 2, y = Math.max(12, (avail - rh) / 2);
+  const wallH = 170 * R, floorTop = y + wallH;
   return {
-    R, cx, floorY, bottom,
-    bed: { x: cx - 330 * R, y: floorY + 40 * R, w: 240 * R },
-    desk: { x: cx + 100 * R, y: floorY + 10 * R, w: 210 * R },
+    R, x, y, rw, rh, wallH, floorTop, cx: x + rw / 2,
+    bed: { x: x + 40 * R, y: floorTop - 16 * R, w: 170 * R, h: 250 * R },
+    desk: { x: x + rw - 290 * R, y: floorTop + 6 * R, w: 230 * R, h: 96 * R },
   };
 }
-function hitBed(sx, sy) { const r = room(), b = r.bed; return sx > b.x - 10 * r.R && sx < b.x + b.w + 10 * r.R && sy > b.y - 110 * r.R && sy < b.y + 40 * r.R; }
-function hitDesk(sx, sy) { const r = room(), d = r.desk; return sx > d.x - 50 * r.R && sx < d.x + d.w + 10 * r.R && sy > d.y - 120 * r.R && sy < d.y + 90 * r.R; }
+function hitBed(sx, sy) { const r = room(), b = r.bed; return sx > b.x && sx < b.x + b.w && sy > b.y - 40 * r.R && sy < b.y + b.h; }
+function hitDesk(sx, sy) { const r = room(), d = r.desk; return sx > d.x - 10 * r.R && sx < d.x + d.w + 10 * r.R && sy > d.y - 70 * r.R && sy < d.y + d.h + 40 * r.R; }
+
+// a little framed photo of the cube out fishing (variant picks the scene)
+function drawPhoto(px, py, pw, ph, variant, R) {
+  sketch(ctx, rectPts(px - 5 * R, py - 5 * R, pw + 10 * R, ph + 10 * R), true, 0.4 * R, 1100 + variant); fillInk(ctx, '#e0b06a', 2.4 * R);
+  ctx.save(); ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
+  const sky = variant === 2 ? ['#ffb37a', '#ffd9a8'] : ['#bfe6ff', '#fff6dc'];
+  const g = ctx.createLinearGradient(0, py, 0, py + ph); g.addColorStop(0, sky[0]); g.addColorStop(1, sky[1]);
+  ctx.fillStyle = g; ctx.fillRect(px, py, pw, ph);
+  if (variant === 2) { ctx.fillStyle = '#ffdf6e'; ctx.beginPath(); ctx.arc(px + pw * 0.72, py + ph * 0.55, ph * 0.18, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = '#5aa7e6'; ctx.fillRect(px, py + ph * 0.62, pw, ph * 0.38);
+  ctx.fillStyle = '#b77a43'; ctx.fillRect(px, py + ph * 0.58, pw * 0.45, ph * 0.07);
+  // tiny cube
+  const cs = ph * 0.26, cx = px + pw * 0.28, cb = py + ph * 0.58;
+  ctx.fillStyle = '#fff'; ctx.fillRect(cx - cs / 2, cb - cs, cs, cs);
+  ctx.strokeStyle = INK; ctx.lineWidth = 1.4 * R; ctx.strokeRect(cx - cs / 2, cb - cs, cs, cs);
+  ctx.fillStyle = INK;
+  ctx.beginPath(); ctx.arc(cx - cs * 0.18, cb - cs * 0.62, 0.9 * R + 0.4, 0, Math.PI * 2); ctx.arc(cx + cs * 0.18, cb - cs * 0.62, 0.9 * R + 0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cb - cs * 0.42, cs * 0.18, 0.15 * Math.PI, 0.85 * Math.PI); ctx.lineWidth = 1 * R; ctx.stroke();
+  // rod + line (+ a fish in variant 1)
+  ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 1.6 * R;
+  ctx.beginPath(); ctx.moveTo(cx + cs * 0.5, cb - cs * 0.5); ctx.quadraticCurveTo(cx + pw * 0.3, cb - ph * 0.55, cx + pw * 0.45, cb - ph * 0.45); ctx.stroke();
+  ctx.strokeStyle = 'rgba(27,27,27,.7)'; ctx.lineWidth = 0.8 * R;
+  ctx.beginPath(); ctx.moveTo(cx + pw * 0.45, cb - ph * 0.45); ctx.lineTo(cx + pw * 0.48, py + ph * (variant === 1 ? 0.3 : 0.7)); ctx.stroke();
+  if (variant === 1) { ctx.fillStyle = '#ff9f3f'; ctx.beginPath(); ctx.ellipse(cx + pw * 0.5, py + ph * 0.4, pw * 0.09, ph * 0.08, 0.6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1 * R; ctx.stroke(); }
+  else { ctx.fillStyle = '#ff4d4d'; ctx.beginPath(); ctx.arc(cx + pw * 0.48, py + ph * 0.7, 1.8 * R, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  sketch(ctx, rectPts(px, py, pw, ph), true, 0.3 * R, 1110 + variant); ink(ctx, 1.6 * R);
+}
+
 function drawInterior() {
-  const r = room(), R = r.R, d = world.dark;
+  const r = room(), R = r.R, d = world.dark, { x, y, rw, rh, wallH, floorTop } = r;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-  // log back wall
-  const logH = 34 * R;
-  for (let y = 0, i = 0; y < r.floorY; y += logH, i++) { sketch(ctx, rectPts(-10, y, W + 20, logH), true, 0.8 * R, 1000 + i); fillInk(ctx, i % 2 ? '#8b5a2b' : '#a0683a', 2 * R); }
-  // window to the outside (day sky or night with moon and stars)
-  const ww = 150 * R, wh = 110 * R, wx = r.cx - ww / 2, wy = Math.max(40, r.floorY - 330 * R);
+  ctx.fillStyle = '#1b130d'; ctx.fillRect(0, 0, W, H); // dark around the room, like Stardew
+
+  // back wall: horizontal logs
+  const logs = 5, lh = wallH / logs;
+  for (let i = 0; i < logs; i++) { sketch(ctx, rectPts(x, y + i * lh, rw, lh), true, 0.6 * R, 1000 + i); fillInk(ctx, i % 2 ? '#8b5a2b' : '#a0683a', 2 * R); }
+  // trim where wall meets floor
+  sketch(ctx, rectPts(x, floorTop - 8 * R, rw, 10 * R), true, 0.4 * R, 1006); fillInk(ctx, '#6e4426', 2 * R);
+
+  // window (middle of the wall)
+  const ww = 120 * R, wh = 92 * R, wx = r.cx - ww / 2 - 30 * R, wy = y + 30 * R;
   const sky = ctx.createLinearGradient(0, wy, 0, wy + wh);
   sky.addColorStop(0, d > 0.5 ? '#1b2550' : '#bfe6ff'); sky.addColorStop(1, d > 0.5 ? '#3a4a8a' : '#fff6dc');
-  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.6 * R, 1020); ctx.fillStyle = sky; ctx.fill();
-  if (d > 0.5) {
-    ctx.fillStyle = '#fdf3c4'; ctx.beginPath(); ctx.arc(wx + ww * 0.72, wy + wh * 0.32, 13 * R, 0, Math.PI * 2); ctx.fill();
-    for (const [sx, sy] of [[.2, .25], [.4, .15], [.3, .55], [.55, .4], [.85, .7]]) { ctx.beginPath(); ctx.arc(wx + ww * sx, wy + wh * sy, 1.6 * R, 0, Math.PI * 2); ctx.fill(); }
-  } else {
-    ctx.fillStyle = '#ffe27a'; ctx.beginPath(); ctx.arc(wx + ww * 0.72, wy + wh * 0.32, 14 * R, 0, Math.PI * 2); ctx.fill(); ink(ctx, 1.6 * R);
-  }
-  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.6 * R, 1020); ink(ctx, 5 * R); ctx.strokeStyle = '#6e4426'; ctx.lineWidth = 3 * R; ctx.stroke();
-  sketch(ctx, [[wx + ww / 2, wy], [wx + ww / 2, wy + wh]], false, 0.3 * R, 1021); ink(ctx, 4 * R);
-  sketch(ctx, [[wx, wy + wh / 2], [wx + ww, wy + wh / 2]], false, 0.3 * R, 1022); ink(ctx, 4 * R);
-  // wooden floor
-  sketch(ctx, rectPts(-10, r.floorY, W + 20, H - r.floorY + 10), true, 0.8 * R, 1030); fillInk(ctx, '#c99a62', 3 * R);
-  for (let x = 30 * R, i = 0; x < W; x += 70 * R, i++) { sketch(ctx, [[x, r.floorY + 4], [x - 20 * R, H]], false, 0.4 * R, 1031 + i); ink(ctx, 1.4 * R, 0.3); }
-  // rug
-  sketch(ctx, ellipsePts(r.cx, r.floorY + 80 * R, 170 * R, 36 * R, 30), true, 0.6 * R, 1040); fillInk(ctx, '#d9534f', 2.6 * R);
-  sketch(ctx, ellipsePts(r.cx, r.floorY + 80 * R, 130 * R, 24 * R, 26), true, 0.4 * R, 1041); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * R; ctx.stroke();
+  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.5 * R, 1020); ctx.fillStyle = sky; ctx.fill();
+  ctx.fillStyle = d > 0.5 ? '#fdf3c4' : '#ffe27a';
+  ctx.beginPath(); ctx.arc(wx + ww * 0.72, wy + wh * 0.32, 12 * R, 0, Math.PI * 2); ctx.fill();
+  if (d > 0.5) for (const [sx, sy] of [[.2, .25], [.4, .15], [.3, .55], [.55, .45]]) { ctx.beginPath(); ctx.arc(wx + ww * sx, wy + wh * sy, 1.5 * R, 0, Math.PI * 2); ctx.fill(); }
+  sketch(ctx, rectPts(wx, wy, ww, wh), true, 0.5 * R, 1020); ink(ctx, 5 * R); ctx.strokeStyle = '#6e4426'; ctx.lineWidth = 3 * R; ctx.stroke();
+  sketch(ctx, [[wx + ww / 2, wy], [wx + ww / 2, wy + wh]], false, 0.3 * R, 1021); ink(ctx, 3.5 * R);
+  sketch(ctx, [[wx, wy + wh / 2], [wx + ww, wy + wh / 2]], false, 0.3 * R, 1022); ink(ctx, 3.5 * R);
+  sketch(ctx, rectPts(wx - 8 * R, wy + wh, ww + 16 * R, 8 * R), true, 0.3 * R, 1023); fillInk(ctx, '#c99a62', 2 * R);
 
-  // bed
-  const b = r.bed, bh = 44 * R;
-  sketch(ctx, rectPts(b.x - 6 * R, b.y - 100 * R, 26 * R, 130 * R), true, 0.6 * R, 1050); fillInk(ctx, '#7a4a24', 2.8 * R);
-  sketch(ctx, rectPts(b.x, b.y - 10 * R, b.w, bh), true, 0.6 * R, 1051); fillInk(ctx, '#8b5a2b', 2.8 * R);
-  for (const lx of [b.x + 8 * R, b.x + b.w - 16 * R]) { sketch(ctx, rectPts(lx, b.y + bh - 12 * R, 10 * R, 18 * R), true, 0.3 * R, 1052 + lx); fillInk(ctx, '#6e4426', 2 * R); }
-  sketch(ctx, rectPts(b.x + 14 * R, b.y - 40 * R, b.w - 20 * R, 32 * R), true, 0.6 * R, 1053); fillInk(ctx, '#fff', 2.6 * R);
-  const blanket = [[b.x + 74 * R, b.y - 44 * R], [b.x + b.w - 2 * R, b.y - 44 * R], [b.x + b.w + 4 * R, b.y + 14 * R], [b.x + 70 * R, b.y + 14 * R]];
-  sketch(ctx, blanket, true, 0.6 * R, 1054); fillInk(ctx, '#4aa3df', 2.6 * R);
-  ctx.save(); sketch(ctx, blanket, true, 0.6 * R, 1054); ctx.clip();
-  for (let x = b.x + 90 * R; x < b.x + b.w; x += 28 * R) { ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(x, b.y - 50 * R, 12 * R, 70 * R); }
+  // framed photos of the cube fishing
+  drawPhoto(x + 228 * R, y + 34 * R, 70 * R, 52 * R, 0, R);
+  drawPhoto(x + 248 * R, y + 100 * R, 52 * R, 40 * R, 1, R);
+  drawPhoto(wx + ww + 30 * R, y + 40 * R, 78 * R, 56 * R, 2, R);
+
+  // plank floor
+  sketch(ctx, rectPts(x, floorTop, rw, rh - wallH), true, 0.6 * R, 1030); fillInk(ctx, '#d9a066', 2.4 * R);
+  const ph = 28 * R;
+  for (let yy = floorTop + ph, i = 0; yy < y + rh - 2; yy += ph, i++) {
+    sketch(ctx, [[x + 2, yy], [x + rw - 2, yy]], false, 0.3 * R, 1031 + i); ink(ctx, 1.2 * R, 0.35);
+    for (let xx = x + ((i % 2) ? 60 : 130) * R; xx < x + rw; xx += 190 * R) { sketch(ctx, [[xx, yy - ph], [xx, yy]], false, 0.2 * R, 1050 + i * 9 + xx); ink(ctx, 1 * R, 0.3); }
+  }
+  // side/bottom walls (thin dark edges) + doormat at the bottom
+  ctx.strokeStyle = '#4a2f1a'; ctx.lineWidth = 10 * R; ctx.strokeRect(x - 5 * R, y - 5 * R, rw + 10 * R, rh + 10 * R);
+  sketch(ctx, rectPts(r.cx - 50 * R, y + rh - 26 * R, 100 * R, 22 * R), true, 0.4 * R, 1060); fillInk(ctx, '#7a9c4a', 2 * R);
+
+  // rug in the middle
+  sketch(ctx, ellipsePts(r.cx + 20 * R, floorTop + 210 * R, 160 * R, 70 * R, 32), true, 0.6 * R, 1040); fillInk(ctx, '#d9534f', 2.6 * R);
+  sketch(ctx, ellipsePts(r.cx + 20 * R, floorTop + 210 * R, 120 * R, 50 * R, 28), true, 0.4 * R, 1041); ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * R; ctx.stroke();
+
+  // bed against the back wall (seen from above)
+  const b = r.bed;
+  sketch(ctx, rectPts(b.x, b.y - 40 * R, b.w, 46 * R), true, 0.5 * R, 1070); fillInk(ctx, '#7a4a24', 2.6 * R); // headboard
+  sketch(ctx, rectPts(b.x + 6 * R, b.y, b.w - 12 * R, b.h), true, 0.5 * R, 1071); fillInk(ctx, '#8b5a2b', 2.6 * R); // frame
+  sketch(ctx, rectPts(b.x + 14 * R, b.y + 8 * R, b.w - 28 * R, b.h - 22 * R), true, 0.5 * R, 1072); fillInk(ctx, '#fff', 2.2 * R); // sheet
+  sketch(ctx, ellipsePts(b.x + b.w / 2, b.y + 34 * R, b.w * 0.32, 20 * R, 18), true, 0.4 * R, 1073); fillInk(ctx, '#fffaf0', 2 * R); // pillow
+  const bl = rectPts(b.x + 12 * R, b.y + 74 * R, b.w - 24 * R, b.h - 80 * R);
+  sketch(ctx, bl, true, 0.5 * R, 1074); fillInk(ctx, '#4aa3df', 2.4 * R);
+  ctx.save(); sketch(ctx, bl, true, 0.5 * R, 1074); ctx.clip();
+  for (let k = 0; k < 8; k++) { ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(b.x + 12 * R + k * 24 * R, b.y + 74 * R, 11 * R, b.h); ctx.fillRect(b.x, b.y + 84 * R + k * 24 * R, b.w, 11 * R); }
   ctx.restore();
-  sketch(ctx, ellipsePts(b.x + 44 * R, b.y - 46 * R, 30 * R, 15 * R, 18), true, 0.4 * R, 1055); fillInk(ctx, '#fffaf0', 2.4 * R);
-  // desk + chair + lamp + journal
+  sketch(ctx, [[b.x + 12 * R, b.y + 78 * R], [b.x + b.w - 12 * R, b.y + 78 * R]], false, 0.3 * R, 1075); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 3 * R; ctx.stroke();
+
+  // workbench against the back wall (top + front face), with a rod and tools on it
   const dk = r.desk;
-  sketch(ctx, rectPts(dk.x - 46 * R, dk.y - 30 * R, 36 * R, 6 * R), true, 0.3 * R, 1060); fillInk(ctx, '#a0683a', 2 * R);
-  sketch(ctx, rectPts(dk.x - 46 * R, dk.y - 80 * R, 6 * R, 110 * R), true, 0.3 * R, 1061); fillInk(ctx, '#8b5a2b', 2 * R);
-  sketch(ctx, rectPts(dk.x - 16 * R, dk.y - 24 * R, 6 * R, 54 * R), true, 0.3 * R, 1062); fillInk(ctx, '#8b5a2b', 2 * R);
-  sketch(ctx, rectPts(dk.x, dk.y - 20 * R, dk.w, 16 * R), true, 0.5 * R, 1063); fillInk(ctx, '#a0683a', 2.8 * R);
-  for (const lx of [dk.x + 8 * R, dk.x + dk.w - 18 * R]) { sketch(ctx, rectPts(lx, dk.y - 4 * R, 10 * R, 76 * R), true, 0.3 * R, 1064 + lx); fillInk(ctx, '#8b5a2b', 2.2 * R); }
-  sketch(ctx, rectPts(dk.x + dk.w - 90 * R, dk.y - 4 * R, 70 * R, 34 * R), true, 0.4 * R, 1066); fillInk(ctx, '#b77a43', 2.2 * R);
-  ctx.beginPath(); ctx.arc(dk.x + dk.w - 55 * R, dk.y + 13 * R, 3 * R, 0, Math.PI * 2); ctx.fillStyle = '#f2c94c'; ctx.fill(); ink(ctx, 1.2 * R);
-  // journal (open book) on the desk
-  sketch(ctx, [[dk.x + 30 * R, dk.y - 24 * R], [dk.x + 62 * R, dk.y - 30 * R], [dk.x + 94 * R, dk.y - 24 * R], [dk.x + 94 * R, dk.y - 20 * R], [dk.x + 30 * R, dk.y - 20 * R]], true, 0.3 * R, 1067); fillInk(ctx, '#fffaf0', 2 * R);
-  sketch(ctx, [[dk.x + 62 * R, dk.y - 30 * R], [dk.x + 62 * R, dk.y - 20 * R]], false, 0.2 * R, 1068); ink(ctx, 1.4 * R);
-  // lamp
-  const lx = dk.x + dk.w - 34 * R;
-  sketch(ctx, [[lx, dk.y - 20 * R], [lx, dk.y - 70 * R]], false, 0.3 * R, 1069); ink(ctx, 3 * R);
-  sketch(ctx, [[lx - 22 * R, dk.y - 66 * R], [lx + 22 * R, dk.y - 66 * R], [lx + 12 * R, dk.y - 94 * R], [lx - 12 * R, dk.y - 94 * R]], true, 0.4 * R, 1070); fillInk(ctx, '#ffd166', 2.4 * R);
+  sketch(ctx, rectPts(dk.x, dk.y, dk.w, dk.h * 0.62), true, 0.5 * R, 1080); fillInk(ctx, '#c99a62', 2.6 * R);
+  sketch(ctx, rectPts(dk.x, dk.y + dk.h * 0.62, dk.w, dk.h * 0.38), true, 0.5 * R, 1081); fillInk(ctx, '#8b5a2b', 2.6 * R);
+  for (const lx of [dk.x + 6 * R, dk.x + dk.w - 18 * R]) { sketch(ctx, rectPts(lx, dk.y + dk.h, 12 * R, 22 * R), true, 0.3 * R, 1082 + lx); fillInk(ctx, '#6e4426', 2 * R); }
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = INK; ctx.lineWidth = 7 * R; ctx.beginPath(); ctx.moveTo(dk.x + 26 * R, dk.y + 44 * R); ctx.lineTo(dk.x + 150 * R, dk.y + 14 * R); ctx.stroke();
+  ctx.strokeStyle = '#c99a62'; ctx.lineWidth = 4 * R; ctx.stroke();
+  ctx.strokeStyle = '#3a3a3a'; ctx.lineWidth = 6 * R; ctx.beginPath(); ctx.moveTo(dk.x + 26 * R, dk.y + 44 * R); ctx.lineTo(dk.x + 52 * R, dk.y + 38 * R); ctx.stroke();
+  sketch(ctx, rectPts(dk.x + 160 * R, dk.y + 12 * R, 26 * R, 18 * R), true, 0.3 * R, 1085); fillInk(ctx, '#9aa3ad', 2 * R); // vise
+  sketch(ctx, [[dk.x + 120 * R, dk.y + 46 * R], [dk.x + 146 * R, dk.y + 40 * R]], false, 0.2 * R, 1086); ink(ctx, 3 * R); // hammer handle
+  sketch(ctx, rectPts(dk.x + 142 * R, dk.y + 34 * R, 10 * R, 14 * R), true, 0.2 * R, 1087); fillInk(ctx, '#6b7280', 1.6 * R);
+  // lamp on the bench
+  const lx = dk.x + dk.w - 30 * R, ly = dk.y + 18 * R;
+  sketch(ctx, ellipsePts(lx, ly, 14 * R, 10 * R, 14), true, 0.3 * R, 1088); fillInk(ctx, '#ffd166', 2 * R);
+  // stool in front of the bench
+  sketch(ctx, ellipsePts(dk.x + 100 * R, dk.y + dk.h + 46 * R, 26 * R, 16 * R, 16), true, 0.4 * R, 1089); fillInk(ctx, '#a0683a', 2.4 * R);
+
+  // plant in the corner
+  sketch(ctx, rectPts(x + rw - 52 * R, y + rh - 70 * R, 32 * R, 30 * R), true, 0.3 * R, 1090); fillInk(ctx, '#d0704b', 2 * R);
+  for (const [ox, oy] of [[-10, -14], [8, -18], [0, -26], [16, -6], [-16, -4]]) { sketch(ctx, ellipsePts(x + rw - 36 * R + ox * R, y + rh - 72 * R + oy * R, 10 * R, 7 * R, 10), true, 0.3 * R, 1091 + ox); fillInk(ctx, '#7ccf5a', 1.8 * R); }
+
   // the cube, at home on the rug
-  const cs = 58 * R, cy = r.floorY + 76 * R + Math.sin(time * 2) * 2 * R;
-  sketch(ctx, rectPts(r.cx - cs / 2, cy - cs, cs, cs), true, 0.8 * R, 1080); fillInk(ctx, '#fff', 3 * R);
+  const cs = 54 * R, ccx = r.cx + 20 * R, cy = floorTop + 214 * R + Math.sin(time * 2) * 2 * R;
+  ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(ccx, cy + 2 * R, cs * 0.6, 8 * R, 0, 0, Math.PI * 2); ctx.fill();
+  sketch(ctx, rectPts(ccx - cs / 2, cy - cs, cs, cs), true, 0.8 * R, 1095); fillInk(ctx, '#fff', 3 * R);
   ctx.fillStyle = INK;
-  ctx.beginPath(); ctx.ellipse(r.cx - cs * 0.18, cy - cs * 0.62, 3 * R, 4.6 * R, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(r.cx + cs * 0.18, cy - cs * 0.62, 3 * R, 4.6 * R, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(r.cx, cy - cs * 0.42, cs * 0.18, 0.15 * Math.PI, 0.85 * Math.PI); ink(ctx, 2.6 * R);
+  ctx.beginPath(); ctx.ellipse(ccx - cs * 0.18, cy - cs * 0.62, 3 * R, 4.6 * R, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(ccx + cs * 0.18, cy - cs * 0.62, 3 * R, 4.6 * R, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(ccx, cy - cs * 0.42, cs * 0.2, 0.15 * Math.PI, 0.85 * Math.PI); ink(ctx, 2.6 * R);
 
   // night: darker room, warm lamp light
   if (d > 0.001) {
     ctx.save(); ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = `rgb(${Math.round(lerp(255, 110, d))},${Math.round(lerp(255, 110, d))},${Math.round(lerp(255, 170, d))})`; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = `rgb(${Math.round(lerp(255, 105, d))},${Math.round(lerp(255, 105, d))},${Math.round(lerp(255, 165, d))})`; ctx.fillRect(0, 0, W, H);
     ctx.restore();
-    ctx.save(); ctx.globalCompositeOperation = 'lighter'; glowAt(lx, dk.y - 70 * R, 170 * R, '255,200,110', 0.5 * d); ctx.restore();
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; glowAt(lx, ly, 200 * R, '255,200,110', 0.55 * d); ctx.restore();
   }
-  if (bedHover) bubble(b.x + b.w / 2, b.y - 130 * R, 'Sleep');
-  if (deskHover) bubble(dk.x + dk.w / 2, dk.y - 130 * R, 'Rod Workbench');
+  if (bedHover) bubble(b.x + b.w / 2, b.y - 62 * R, 'Sleep');
+  if (deskHover) bubble(dk.x + dk.w / 2, dk.y - 30 * R, 'Rod Workbench');
 }
 const leaveBtn = document.getElementById('leaveCabin'), sleepFade = document.getElementById('sleepFade');
 function enterCabin() { insideCabin = true; leaveBtn.classList.remove('hidden'); }
@@ -1778,7 +1834,11 @@ function renderBag() {
       <div class="sketch">${bait}</div>
       <div class="sketch">🐟 Caught: ${fmt(S.caught)}</div>
     </div>
-    <h3>Items (${invCount()}) <span class="stack-note">up to ${STACK_MAX} of each</span></h3>
+    <h3>Your Rods (${S.ownedRods.filter(id => ROD[id]).length})</h3>
+    <div class="pick-grid rods-grid">${S.ownedRods.filter(id => ROD[id]).map(id => { const r = ROD[id], eq = S.rod === id; return `<div class="pick ${eq ? 'sel' : ''}">
+      <canvas width="192" height="128" data-rod="${id}"></canvas><div class="pn">${r.name}</div><div class="pl">🍀 +${Math.round(r.luck * 100)}% · ⚡ ${speedText(r)}</div>
+      ${eq ? '<button class="btn sketch btn-equipped" disabled>Equipped ✓</button>' : `<button class="btn sketch btn-equip" data-bag-equip="${id}">Equip</button>`}</div>`; }).join('')}</div>
+    <h3 class="section">Items (${invCount()}) <span class="stack-note">up to ${STACK_MAX} of each</span></h3>
     <div class="grid">${ids.length ? ids.map(id => tileHTML(id, S.inventory[id], '', true)).join('') : '<div class="empty-note">Your backpack is empty. Tap the cube to fish!</div>'}</div>
     <div class="section"><h3>Collection (${found}/${ITEMS.length})</h3>
       <div class="grid">${ITEMS.slice().sort((a, b) => a.rarity - b.rarity).map(it => S.discovered[it.id]
@@ -1786,8 +1846,11 @@ function renderBag() {
         : `<div class="tile unknown" title="Not found yet"><span class="e">${ItemArt.html(it.id, it.emoji)}</span><span class="n">???</span><span class="r">${RARITIES[it.rarity].name}</span></div>`).join('')}</div>
     </div>
     <button class="reset" data-reset>Reset all progress</button>`;
+  bagBody.querySelectorAll('canvas[data-rod]').forEach(c => drawRodIcon(c, ROD[c.dataset.rod], 'shop'));
 }
 bagEl.addEventListener('click', e => {
+  const eq = e.target.closest('[data-bag-equip]');
+  if (eq) { S.rod = eq.dataset.bagEquip; save(); refreshHUD(); renderBag(); toast(`Equipped the ${ROD[S.rod].name}`); return; }
   const btn = e.target.closest('[data-reset]'); if (!btn) return;
   if (!btn.dataset.armed) {
     btn.dataset.armed = '1'; btn.textContent = 'Tap again to erase ALL progress';

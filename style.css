@@ -275,6 +275,9 @@ body.shake canvas#world { animation: shake .45s; }
 .pick canvas { width: 96px; height: 64px; }
 .pick .pn { font-size: 14px; line-height: 1.1; }
 .pick .pl { font-size: 12px; opacity: .7; }
+.rods-grid { margin-bottom: 18px; }
+.rods-grid .pick { cursor: default; }
+.rods-grid .btn { width: 100%; margin-top: 4px; font-size: 14px; padding: 2px 4px; }
 .merge-result { display: flex; gap: 14px; align-items: center; border: 3px dashed var(--ink); border-radius: var(--wob-l); padding: 10px; margin: 14px 0 8px; background: #fffbea; flex-wrap: wrap; }
 .merge-result canvas { width: 120px; height: 80px; }
 .merge-result .mr-info { flex: 1; min-width: 160px; }
