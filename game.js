@@ -456,7 +456,35 @@ function update(dt) {
 // ---------- day / night + merchant arrivals ----------
 const world = { dark: 0, t: 0, glow: 0 };
 const merchant = { here: null, walk: 0 };
-let pendingToast = null, lastClockText = '';
+let pendingToast = null, pendingBell = false, lastClockText = '';
+
+// ---------- sound: a little shop bell (synthesized, no audio files) ----------
+// Browsers only allow sound after the player taps or presses a key, so the
+// audio context is created on the first interaction.
+let audioCtx = null;
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) { /* no audio available */ }
+}
+window.addEventListener('pointerdown', unlockAudio, true);
+window.addEventListener('keydown', unlockAudio, true);
+function playBell() {
+  if (!audioCtx || audioCtx.state !== 'running') return;
+  const now = audioCtx.currentTime;
+  for (const [start, base] of [[0, 1318.5], [0.22, 1046.5]]) { // two dings: E6 then C6
+    for (const [ratio, vol, decay] of [[1, 0.22, 1.4], [2.76, 0.08, 0.7], [5.4, 0.04, 0.35], [8.93, 0.02, 0.2]]) {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = base * ratio;
+      g.gain.setValueAtTime(0.0001, now + start);
+      g.gain.exponentialRampToValueAtTime(vol, now + start + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + start + decay);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(now + start); o.stop(now + start + decay + 0.05);
+    }
+  }
+}
 function updateClock(dt) {
   const ck = clock();
   world.dark = darknessAt(ck.t);
@@ -466,8 +494,8 @@ function updateClock(dt) {
   world.glow = clamp(1 - toEdge / 90, 0, 1);
   const here = ck.isDay && merchantVisits(ck.day);
   if (here !== merchant.here) {
-    if (merchant.here === null) { if (here) pendingToast = 'A traveling merchant is visiting the shop today!'; }
-    else if (here) pendingToast = 'A traveling merchant arrived by the shop!';
+    if (merchant.here === null) { if (here) { pendingToast = 'A traveling merchant is visiting the shop today!'; pendingBell = true; } }
+    else if (here) { pendingToast = 'A traveling merchant arrived by the shop!'; pendingBell = true; }
     else {
       pendingToast = 'The traveling merchant packed up and left.';
       if (modalOpen === merchantEl) closeModal(merchantEl);
@@ -478,7 +506,10 @@ function updateClock(dt) {
   // walks in at sunrise and out at sunset
   const target = here ? clamp(Math.min(ck.t, DAY_S - ck.t) / 4, 0, 1) : 0;
   merchant.walk = here ? target : Math.max(0, merchant.walk - dt / 2);
-  if (pendingToast && !document.getElementById('title')) { toast(pendingToast); pendingToast = null; }
+  if (pendingToast && !document.getElementById('title') && !sleeping) {
+    toast(pendingToast); pendingToast = null;
+    if (pendingBell) { playBell(); pendingBell = false; }
+  }
   const txt = (ck.isDay ? 'Day ' : 'Night ') + mmss(ck.left);
   if (txt !== lastClockText) {
     lastClockText = txt; clockVal.textContent = txt; clockEl.classList.toggle('night', !ck.isDay);
