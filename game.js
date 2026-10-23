@@ -102,7 +102,18 @@ function darknessAt(t) {
   if (t < DAY_S + FADE_S) return (t - DAY_S) / FADE_S;
   return 1;
 }
-const merchantVisits = day => mulberry(day * 7919 + 101)() < MERCHANT.chance;
+// The merchant isn't on a fixed schedule: the game rolls for him the moment it
+// sees a new morning (sunrise, waking up in the cabin, or opening the game that
+// day). One roll per morning, saved so reloading can't re-roll it.
+function merchantVisits(ck) {
+  if (!ck.isDay) return false;
+  if (S.merchantRollDay !== ck.day) {
+    S.merchantRollDay = ck.day;
+    if (Math.random() < MERCHANT.chance) S.merchantDay = ck.day;
+    save();
+  }
+  return S.merchantDay === ck.day;
+}
 function merchantStock(day) {
   const r = mulberry(day * 31337 + 7);
   const pick = (arr, n) => arr.map(x => [r(), x]).sort((a, b) => a[0] - b[0]).slice(0, n).map(p => p[1]);
@@ -113,7 +124,7 @@ function merchantStock(day) {
   };
 }
 const mmss = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-window.SellingSelling = { setClockOffset: s => { clockOffset = s; } };
+window.SellingSelling = { setClockOffset: s => { clockOffset = s; }, sleep: () => goToSleep(), merchantHere: () => merchant.here, tick: () => updateClock(0) }; // test hooks
 
 // ============================================================
 //  Canvas + hand-drawn line helpers
@@ -506,7 +517,7 @@ function updateClock(dt) {
   // sunrise / sunset glow: strongest right at dawn and dusk
   const toEdge = Math.min(ck.t, CYCLE_S - ck.t, Math.abs(ck.t - DAY_S));
   world.glow = clamp(1 - toEdge / 90, 0, 1);
-  const here = ck.isDay && merchantVisits(ck.day);
+  const here = merchantVisits(ck);
   if (here !== merchant.here) {
     if (merchant.here === null) { if (here) { pendingToast = 'A traveling merchant is visiting the shop today!'; pendingBell = true; } }
     else if (here) { pendingToast = 'A traveling merchant arrived by the shop!'; pendingBell = true; }
@@ -1100,7 +1111,10 @@ function goToSleep() {
   sleepFade.classList.add('on');
   // wake up just after sunrise, once it's light out
   setTimeout(() => { const c2 = clock(); if (!c2.isDay) { S.timeSkip = (S.timeSkip || 0) + c2.left + FADE_S + 1; save(); } }, 900);
-  setTimeout(() => { sleepFade.classList.remove('on'); sleeping = false; toast('Good morning! You slept through the night.'); }, 2100);
+  setTimeout(() => { sleepFade.classList.remove('on'); sleeping = false;
+    if (merchant.here) { pendingToast = 'Good morning! The traveling merchant is at the shop!'; pendingBell = true; }
+    else { pendingToast = null; toast('Good morning! No merchant today, maybe tomorrow.'); }
+  }, 2100);
 }
 
 // ---------- traveling merchant's mini shop (just left of the main shop) ----------
