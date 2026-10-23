@@ -5,6 +5,9 @@ window.GAME_DATA = {
   // How strongly luck pushes rolls toward rarer tiers (higher = stronger).
   LUCK_POWER: 0.5,
 
+  // Most of one item the backpack can hold (each item type stacks up to this).
+  STACK_MAX: 20,
+
   // Day / night cycle, in seconds.
   DAY_SECONDS: 600,
   NIGHT_SECONDS: 600,

@@ -5,6 +5,7 @@ const { RARITIES, ITEMS, RODS, BAITS, LUCK_POWER } = window.GAME_DATA;
 const byId = arr => Object.fromEntries(arr.map(o => [o.id, o]));
 const ITEM = byId(ITEMS), ROD = byId(RODS), BAIT = byId(BAITS);
 const INK = '#1b1b1b';
+const STACK_MAX = window.GAME_DATA.STACK_MAX || 20; // most of one item the backpack holds
 const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
 const HAND_FONT = '"Patrick Hand", "Comic Sans MS", cursive';
 
@@ -23,6 +24,7 @@ function loadState() {
       const s = Object.assign(freshState(), JSON.parse(raw));
       if (!ROD[s.rod]) s.rod = RODS[0].id;
       if (s.bait && !BAIT[s.bait]) s.bait = null;
+      for (const id in s.inventory) s.inventory[id] = Math.min(s.inventory[id], STACK_MAX);
       return s;
     }
   } catch (e) { /* storage unavailable */ }
@@ -1233,8 +1235,11 @@ function showReveal(item) {
   const r = RARITIES[item.rarity];
   const isNew = !S.discovered[item.id];
   S.discovered[item.id] = true;
-  S.inventory[item.id] = (S.inventory[item.id] || 0) + 1;
-  S.caught++; pendingStash = 1; save();
+  // each item stacks up to STACK_MAX; a catch that doesn't fit slips back into the pond
+  const have = S.inventory[item.id] || 0;
+  F.itemFull = have >= STACK_MAX;
+  if (!F.itemFull) { S.inventory[item.id] = have + 1; pendingStash = 1; }
+  S.caught++; save();
 
   revealEl.style.setProperty('--rc', r.color);
   revealEl.dataset.r = item.rarity;
@@ -1252,6 +1257,9 @@ function showReveal(item) {
       <div class="reveal-text">You found ${article(item.name)} <b>${item.name}</b>!</div>
       <div class="reveal-rarity">${r.name}</div>
       <div class="reveal-worth">Worth ${COIN()} ${fmt(item.price)}</div>
+      ${F.itemFull
+        ? `<div class="reveal-full">Your ${item.name} stack is full (${STACK_MAX}/${STACK_MAX})! It slipped back into the pond. Sell some at the shop.</div>`
+        : `<div class="reveal-stack">In your backpack: ${S.inventory[item.id]}/${STACK_MAX}</div>`}
       <div class="reveal-hint">tap anywhere to continue</div>
     </div>`;
   revealEl.classList.remove('hidden', 'closing');
@@ -1265,6 +1273,14 @@ function showReveal(item) {
 function closeReveal() {
   if (!revealOpen || performance.now() - revealAt < 450) return;
   revealOpen = false;
+  if (F.itemFull) {
+    // didn't fit: no trip to the backpack, the popup just fades away
+    revealEl.classList.add('closing'); revealEl.classList.remove('show');
+    setTimeout(() => { if (!revealOpen) revealEl.classList.add('hidden'); if (F.state === 'cooldown') go('idle'); }, 500);
+    go('cooldown');
+    if (F.ranOut) { toast(`You ran out of ${F.ranOut}!`); F.ranOut = null; }
+    return;
+  }
   const itemEl = revealEl.querySelector('.reveal-item');
   const r = itemEl.getBoundingClientRect(), bp = backpackEl.getBoundingClientRect();
   const sx = r.left + r.width / 2, sy = r.top + r.height / 2;
@@ -1301,10 +1317,10 @@ function sortedIds(counts) {
   return Object.keys(counts).filter(id => counts[id] > 0 && ITEM[id])
     .sort((a, b) => ITEM[b].rarity - ITEM[a].rarity || ITEM[b].price - ITEM[a].price);
 }
-function tileHTML(id, count, attrs = '') {
+function tileHTML(id, count, attrs = '', showFull = false) {
   const it = ITEM[id], r = RARITIES[it.rarity];
   return `<div class="tile" style="--rc:${r.color}" data-id="${id}" ${attrs} title="${it.name} (${r.name})">
-    <span class="c">${count > 1 ? 'x' + count : ''}</span>
+    <span class="c${showFull && count >= STACK_MAX ? ' full' : ''}">${showFull && count >= STACK_MAX ? 'FULL' : count > 1 ? 'x' + count : ''}</span>
     <span class="e">${ItemArt.html(id, it.emoji)}</span><span class="n">${it.name}</span>
     <span class="p">${COIN()} ${fmt(it.price)}</span></div>`;
 }
@@ -1466,8 +1482,8 @@ function renderBag() {
       <div class="sketch">${bait}</div>
       <div class="sketch">🐟 Caught: ${fmt(S.caught)}</div>
     </div>
-    <h3>Items (${invCount()})</h3>
-    <div class="grid">${ids.length ? ids.map(id => tileHTML(id, S.inventory[id])).join('') : '<div class="empty-note">Your backpack is empty. Tap the cube to fish!</div>'}</div>
+    <h3>Items (${invCount()}) <span class="stack-note">up to ${STACK_MAX} of each</span></h3>
+    <div class="grid">${ids.length ? ids.map(id => tileHTML(id, S.inventory[id], '', true)).join('') : '<div class="empty-note">Your backpack is empty. Tap the cube to fish!</div>'}</div>
     <div class="section"><h3>Collection (${found}/${ITEMS.length})</h3>
       <div class="grid">${ITEMS.slice().sort((a, b) => a.rarity - b.rarity).map(it => S.discovered[it.id]
         ? `<div class="tile" style="--rc:${RARITIES[it.rarity].color}" title="${it.name}"><span class="e">${ItemArt.html(it.id, it.emoji)}</span><span class="n">${it.name}</span><span class="r">${RARITIES[it.rarity].name}</span></div>`

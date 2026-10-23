@@ -262,6 +262,12 @@ body.shake canvas#world { animation: shake .45s; }
 .modal .card-desc { font-size: 13px; min-height: 30px; }
 .modal .stats { font-size: 12px; gap: 4px; margin-bottom: 4px; }
 
+/* Backpack stack limit */
+.tile .c.full { color: #fff; background: #e5383b; border: 2px solid var(--ink); border-radius: 6px; padding: 0 4px; font-size: 11px; top: -6px; right: -6px; }
+.reveal-stack { font-size: 17px; margin-top: 6px; opacity: .65; animation: rise .4s .4s both; }
+.reveal-full { font-size: 18px; margin: 10px auto 0; max-width: 440px; color: #fff; background: #e5383b; border: 3px solid var(--ink); border-radius: var(--wob); padding: 4px 12px; animation: rise .4s .4s both; }
+.stack-note { font-size: 14px; opacity: .55; margin-left: 6px; }
+
 /* Day / night clock */
 .clock-ic { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; background: #ffe27a; border: 2px solid var(--ink); }
 #clock.night .clock-ic { background: #2b3a78; box-shadow: inset 4px -2px 0 0 #fdf3c4; }
