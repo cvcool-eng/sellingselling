@@ -776,9 +776,10 @@ function drawShop() {
 // ---------- property for sale (paved plot, lower down, just left of the shop) ----------
 const PROPERTY_PRICE = (window.GAME_DATA.PROPERTY || {}).price || 500000;
 const propX = () => L.shopX - 170 * K;
-const propY = () => L.shopBase + 150 * K;
+const propY = () => L.shopBase + 200 * K;
+const CABIN_SCALE = 1.25; // the cabin is drawn a bit bigger than its base size
 let propHover = false;
-function hitProperty(wx, wy) { return Math.abs(wx - propX()) < 140 * K && wy > propY() - 95 * K && wy < propY() + 44 * K; }
+function hitProperty(wx, wy) { return Math.abs(wx - propX()) < 140 * K && wy > propY() - (S.property ? 200 : 95) * K && wy < propY() + 44 * K; }
 function drawProperty() {
   const x = propX(), y = propY(), u = K, owned = !!S.property;
   ctx.save(); ctx.translate(x, y);
@@ -802,16 +803,16 @@ function drawProperty() {
     ctx.font = `${15 * u}px ${HAND_FONT}`; ctx.fillStyle = '#c0392b';
     ctx.fillText(`${fmt(PROPERTY_PRICE)} coins`, 0, by + 34 * u);
   } else {
-    drawCabin(u);
+    ctx.save(); ctx.scale(CABIN_SCALE, CABIN_SCALE); drawCabin(u); ctx.restore();
   }
   ctx.restore();
-  if (propHover) bubble(x, y - (owned ? 190 : 124) * K, owned ? 'Go inside!' : 'Buy this land!');
+  if (propHover) bubble(x, y - (owned ? 228 : 124) * K, owned ? 'Go inside!' : 'Buy this land!');
 }
 
 // The cabin that builds itself on the property once it's bought (log version of the shop).
 let cabinBuiltAt = -99;
 function cabinRise() { return clamp((time - cabinBuiltAt) / 1.2, 0, 1); }
-function cabinWindow() { return [propX() - 44 * K, propY() - 56 * K]; }
+function cabinWindow() { return [propX() - 55 * K, propY() - 70 * K]; }
 function drawCabin(u) {
   const rise = cabinRise(), p = rise >= 1 ? 1 : easeOutBack(rise);
   ctx.save(); ctx.translate(0, -6 * u); ctx.scale(1, Math.max(0.02, p)); // grows up out of the slab
