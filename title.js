@@ -577,7 +577,7 @@ function start() {
 }
 root.addEventListener('click', start);
 window.addEventListener('keydown', e => {
-  if (!open) return;
+  if (!open || e.key === 'F11') return; // let the game's fullscreen shortcut through
   e.stopImmediatePropagation(); e.preventDefault();
   start();
 }, true);

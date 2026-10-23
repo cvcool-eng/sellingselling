@@ -1554,7 +1554,16 @@ window.addEventListener('wheel', e => {
   e.preventDefault();
   camTarget = clampCam(camTarget + e.deltaX - e.deltaY);
 }, { passive: false });
+// F11 or Ctrl+F11: toggle fullscreen for the game (computers)
+function toggleFullscreen() {
+  const d = document, el = d.documentElement;
+  try {
+    if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    else (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  } catch (err) { toast('Fullscreen is not available here'); }
+}
 window.addEventListener('keydown', e => {
+  if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); return; }
   if (e.key === 'Escape' && modalOpen) closeModal(modalOpen);
   if (e.code === 'Space' || e.key === 'Enter') {
     if (revealOpen) { e.preventDefault(); closeReveal(); }
