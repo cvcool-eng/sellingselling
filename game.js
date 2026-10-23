@@ -199,7 +199,7 @@ function buildDecor() {
     const y = L.groundY + 8 * K + r() * (bottom - L.groundY);
     if (insidePond(x, y, 1.12)) continue;
     if (Math.abs(x - L.shopX) < 150 * K && y < L.shopBase + 12 * K) continue;
-    if (x > L.shopX - 260 * K && x < L.shopX - 90 * K && y < L.shopBase + 12 * K) continue; // merchant stall spot
+    if (x > L.shopX - 325 * K && x < L.shopX - 155 * K && y < L.shopBase + 12 * K) continue; // merchant stall spot
     if (x > L.dockX0 - 10 && x < L.dockX1 + 20 * K && y > L.deckY - 16 * K && y < L.deckY + 40 * K) continue;
     decor.tufts.push({ x, y, s: (0.7 + r() * 0.6) * K, ph: r() * 6 });
     if (r() < 0.22) decor.flowers.push({ x: x + r() * 20 * K, y: y + 4 * K, c: ['#ff8fab', '#ffd166', '#ffffff', '#b28dff'][Math.floor(r() * 4)], ph: r() * 6, s: K });
@@ -207,7 +207,7 @@ function buildDecor() {
   decor.tufts.sort((a, b) => a.y - b.y);
 
   // trees leave room for the merchant's stall just left of the shop
-  const treeXs = [L.shopX - 330 * K, L.shopX + 210 * K, L.shopX + 330 * K, -170 * K, L.shopX - 480 * K];
+  const treeXs = [L.shopX - 400 * K, L.shopX + 210 * K, L.shopX + 330 * K, -170 * K, L.shopX - 540 * K];
   for (const tx of treeXs) decor.trees.push({ x: tx, y: L.groundY + (20 + r() * 25) * K, s: (0.85 + r() * 0.35) * K, ph: r() * 6 });
   decor.trees.sort((a, b) => a.y - b.y);
 
@@ -755,7 +755,7 @@ function drawShop() {
 }
 
 // ---------- traveling merchant's mini shop (just left of the main shop) ----------
-const merchantX = () => L.shopX - 175 * K;
+const merchantX = () => L.shopX - 240 * K;
 function merchantPop() { const w = merchant.walk; return w <= 0 ? 0 : w >= 1 ? 1 : easeOutBack(w); }
 function merchantLantern() { const p = merchantPop(); return [merchantX() + 56 * K * p, L.shopBase - 104 * K * p]; }
 function hitMerchant(wx, wy) {
@@ -780,13 +780,16 @@ function drawMerchant() {
   sketch(ctx, [[-s / 2, cy - s], [s / 2 + u, cy - s - u], [s / 2, cy], [-s / 2 + u, cy + u]], true, 0.8 * u, 810);
   fillInk(ctx, '#fff', 2.8 * u);
   const ey = cy - s * 0.62;
-  for (const ex of [-10, 10]) {
-    ctx.beginPath(); ctx.arc(ex * u, ey, 7 * u, 0, Math.PI * 2); ctx.fillStyle = 'rgba(200,230,255,.5)'; ctx.fill(); ink(ctx, 2.2 * u);
-    ctx.beginPath(); ctx.ellipse(ex * u, ey + u, 1.8 * u, 2.6 * u, 0, 0, Math.PI * 2); ctx.fillStyle = INK; ctx.fill();
-  }
-  sketch(ctx, [[-3 * u, ey], [3 * u, ey]], false, 0.2 * u, 811); ink(ctx, 2 * u);
-  sketch(ctx, [[-17 * u, ey - u], [-23 * u, ey - 3 * u]], false, 0.2 * u, 812); ink(ctx, 1.8 * u);
-  sketch(ctx, [[17 * u, ey - u], [23 * u, ey - 3 * u]], false, 0.2 * u, 813); ink(ctx, 1.8 * u);
+  // plain left eye
+  ctx.beginPath(); ctx.ellipse(-10 * u, ey + u, 1.8 * u, 2.6 * u, 0, 0, Math.PI * 2); ctx.fillStyle = INK; ctx.fill();
+  // monocle on the right eye: gold rim, glass shine, and a little chain
+  ctx.beginPath(); ctx.arc(10 * u, ey, 7.5 * u, 0, Math.PI * 2); ctx.fillStyle = 'rgba(200,230,255,.55)'; ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = 4 * u; ctx.stroke();
+  ctx.strokeStyle = '#ffcf3f'; ctx.lineWidth = 2 * u; ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(10 * u, ey + u, 1.8 * u, 2.6 * u, 0, 0, Math.PI * 2); ctx.fillStyle = INK; ctx.fill();
+  ctx.beginPath(); ctx.arc(10 * u, ey, 5 * u, 1.1 * Math.PI, 1.45 * Math.PI); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.4 * u; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(16 * u, ey + 5 * u); ctx.quadraticCurveTo(22 * u, ey + 16 * u, 18 * u, ey + 24 * u);
+  ctx.setLineDash([2 * u, 1.6 * u]); ctx.strokeStyle = '#d9a514'; ctx.lineWidth = 1.6 * u; ctx.stroke(); ctx.setLineDash([]);
   ctx.beginPath(); ctx.arc(0, ey + 9 * u, 5 * u, 0.15 * Math.PI, 0.85 * Math.PI); ink(ctx, 2 * u);
   // counter
   sketch(ctx, rectPts(-66 * u, -44 * u, 132 * u, 44 * u), true, 0.9 * u, 820); fillInk(ctx, '#b77a43', 2.8 * u);
