@@ -267,6 +267,22 @@ body.shake canvas#world { animation: shake .45s; }
 #sleepFade.on { opacity: 1; pointer-events: auto; }
 #sleepFade span { animation: bob 2s ease-in-out infinite; }
 
+/* Rod workbench */
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.pick { border: 3px solid var(--ink); border-radius: var(--wob); padding: 6px; text-align: center; cursor: pointer; background: #fff; transition: transform .15s; }
+.pick:hover { transform: translateY(-3px) rotate(-1deg); }
+.pick.sel { background: #fff3b0; border-color: #f0a020; transform: translateY(-3px); }
+.pick canvas { width: 96px; height: 64px; }
+.pick .pn { font-size: 14px; line-height: 1.1; }
+.pick .pl { font-size: 12px; opacity: .7; }
+.merge-result { display: flex; gap: 14px; align-items: center; border: 3px dashed var(--ink); border-radius: var(--wob-l); padding: 10px; margin: 14px 0 8px; background: #fffbea; flex-wrap: wrap; }
+.merge-result canvas { width: 120px; height: 80px; }
+.merge-result .mr-info { flex: 1; min-width: 160px; }
+.merge-result .mr-name { font-size: 22px; }
+.merge-result .mr-stats { font-size: 15px; }
+.merge-note { font-size: 14px; opacity: .65; margin-top: 4px; }
+.merge-go { width: 100%; font-size: 22px; padding: 6px; }
+
 /* Property window */
 .modal .panel.small-panel { width: min(400px, calc(100vw - 32px)); height: auto; }
 .prop-text { font-size: 18px; margin: 0 0 14px; line-height: 1.3; }

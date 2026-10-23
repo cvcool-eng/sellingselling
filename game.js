@@ -15,13 +15,14 @@ const HAND_FONT = '"Patrick Hand", "Comic Sans MS", cursive';
 const SAVE_KEY = 'lucky-pond-save-v1';
 const freshState = () => ({
   money: 0, inventory: {}, ownedRods: [RODS[0].id], rod: RODS[0].id,
-  baits: {}, bait: null, discovered: {}, caught: 0,
+  baits: {}, bait: null, discovered: {}, caught: 0, customRods: [],
 });
 function loadState() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) {
       const s = Object.assign(freshState(), JSON.parse(raw));
+      for (const r of s.customRods || []) ROD[r.id] = r; // merged rods live in the save
       if (!ROD[s.rod]) s.rod = RODS[0].id;
       if (s.bait && !BAIT[s.bait]) s.bait = null;
       // old junk items became fish: move them over to the fish that replaced them
@@ -947,7 +948,7 @@ function drawInterior() {
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; glowAt(lx, dk.y - 70 * R, 170 * R, '255,200,110', 0.5 * d); ctx.restore();
   }
   if (bedHover) bubble(b.x + b.w / 2, b.y - 130 * R, 'Sleep');
-  if (deskHover) bubble(dk.x + dk.w / 2, dk.y - 130 * R, 'Fishing Journal');
+  if (deskHover) bubble(dk.x + dk.w / 2, dk.y - 130 * R, 'Rod Workbench');
 }
 const leaveBtn = document.getElementById('leaveCabin'), sleepFade = document.getElementById('sleepFade');
 function enterCabin() { insideCabin = true; leaveBtn.classList.remove('hidden'); }
@@ -965,11 +966,6 @@ function goToSleep() {
   // wake up just after sunrise, once it's light out
   setTimeout(() => { const c2 = clock(); if (!c2.isDay) { S.timeSkip = (S.timeSkip || 0) + c2.left + FADE_S + 1; save(); } }, 900);
   setTimeout(() => { sleepFade.classList.remove('on'); sleeping = false; toast('Good morning! You slept through the night.'); }, 2100);
-}
-function openJournal() {
-  openBag();
-  const sec = bagBody.querySelector('.section');
-  if (sec) bagBody.scrollTop = sec.offsetTop - bagBody.offsetTop;
 }
 
 // ---------- traveling merchant's mini shop (just left of the main shop) ----------
@@ -1621,7 +1617,7 @@ function baitCard(b) {
 // merchant rods / baits are only sold by the traveling merchant, but still show up
 // in the regular shop once you own them (so you can re-equip or restock)
 function renderRods() {
-  const list = RODS.filter(r => !r.merchant || S.ownedRods.includes(r.id));
+  const list = RODS.filter(r => !r.merchant || S.ownedRods.includes(r.id)).concat(S.customRods || []);
   shopBody.innerHTML = `<p class="tab-intro">Fancier poles = better luck and faster bites!</p><div class="cards">` + list.map(rodCard).join('') + '</div>';
   shopBody.querySelectorAll('canvas[data-rod]').forEach(c => drawRodIcon(c, ROD[c.dataset.rod], 'shop'));
 }
@@ -1652,6 +1648,72 @@ function handleGearButton(t) {
   if (t.hasAttribute('data-unequip-bait')) { S.bait = null; save(); refreshHUD(); return true; }
   return false;
 }
+
+// ---------- Rod workbench: merge two rods into one ----------
+const MERGE = window.GAME_DATA.MERGE || { fee: 100000, luckPenalty: 3 };
+const mergeEl = $('#merge'), mergeBody = $('#mergeBody');
+let mergePick = [];
+const shortName = r => r.name.replace(/ Rod$/, '').split('-')[0].split(' ')[0];
+function mergeCandidates() { return S.ownedRods.filter(id => id !== RODS[0].id && ROD[id]).map(id => ROD[id]); }
+function mergedRod(a, b) {
+  const luck = Math.max(a.luck + b.luck - MERGE.luckPenalty, a.luck, b.luck);
+  return {
+    id: 'merged_' + Date.now().toString(36), name: `${shortName(a)}-${shortName(b)} Rod`, price: 0,
+    luck: Math.round(luck * 100) / 100, speed: Math.max(0.15, Math.round(Math.min(a.speed, b.speed) * 0.95 * 100) / 100),
+    colors: [a.colors[0], b.colors[1]], grip: a.grip, accent: b.accent, sparkle: true, merged: true,
+    desc: `Merged from the ${a.name} and the ${b.name}.`,
+  };
+}
+function openMerge() { mergePick = []; renderMerge(); openModal(mergeEl); setMoneyText(shownMoney); }
+function renderMerge() {
+  const list = mergeCandidates();
+  mergePick = mergePick.filter(id => list.some(r => r.id === id));
+  let html = `<p class="tab-intro">Pick two rods to fuse into one. Luck adds up, minus ${Math.round(MERGE.luckPenalty * 100)}%. Both rods are used up.</p>`;
+  if (list.length < 2) {
+    html += `<div class="empty-note">You need at least 2 rods (not counting the Basic Rod) to merge. Buy more at the shop!</div>`;
+  } else {
+    html += `<div class="pick-grid">${list.map(r => `<div class="pick ${mergePick.includes(r.id) ? 'sel' : ''}" data-pick="${r.id}">
+      <canvas width="192" height="128" data-rod="${r.id}"></canvas><div class="pn">${r.name}</div><div class="pl">🍀 +${Math.round(r.luck * 100)}%</div></div>`).join('')}</div>`;
+    if (mergePick.length === 2) {
+      const res = mergedRod(ROD[mergePick[0]], ROD[mergePick[1]]);
+      const can = S.money >= MERGE.fee;
+      html += `<div class="merge-result"><canvas width="240" height="160" id="mergePreview"></canvas>
+        <div class="mr-info"><div class="mr-name">${res.name}</div>
+        <div class="mr-stats">🍀 +${Math.round(res.luck * 100)}% luck · ⚡ ${speedText(res)}</div>
+        <div class="merge-note">${res.desc}</div></div></div>
+        <button class="btn sketch merge-go ${can ? 'btn-buy' : 'btn-poor'}" data-do-merge>Merge · ${COIN()} ${fmt(MERGE.fee)}</button>`;
+      mergeBody.__preview = res;
+    } else {
+      html += `<div class="merge-note" style="margin-top:12px">Pick ${2 - mergePick.length} more rod${mergePick.length === 1 ? '' : 's'}.</div>`;
+    }
+  }
+  mergeBody.innerHTML = html;
+  mergeBody.querySelectorAll('canvas[data-rod]').forEach(c => drawRodIcon(c, ROD[c.dataset.rod], 'shop'));
+  const pv = mergeBody.querySelector('#mergePreview');
+  if (pv && mergeBody.__preview) drawRodIcon(pv, mergeBody.__preview, 'shop');
+}
+mergeEl.addEventListener('click', e => {
+  const pick = e.target.closest('[data-pick]');
+  if (pick) {
+    const id = pick.dataset.pick;
+    if (mergePick.includes(id)) mergePick = mergePick.filter(x => x !== id);
+    else { mergePick.push(id); if (mergePick.length > 2) mergePick.shift(); }
+    renderMerge(); return;
+  }
+  const go = e.target.closest('[data-do-merge]');
+  if (!go || mergePick.length !== 2) return;
+  if (S.money < MERGE.fee) { cantAfford(go); return; }
+  const [a, b] = mergePick.map(id => ROD[id]);
+  const res = mergedRod(a, b);
+  S.money -= MERGE.fee;
+  S.ownedRods = S.ownedRods.filter(id => id !== a.id && id !== b.id);
+  S.customRods = (S.customRods || []).filter(r => r.id !== a.id && r.id !== b.id);
+  S.customRods.push(res); ROD[res.id] = res; S.ownedRods.push(res.id);
+  S.rod = res.id; // equip the new rod right away
+  save(); bumpMoney(); refreshHUD();
+  mergePick = []; renderMerge();
+  toast(`You made the ${res.name}! (+${Math.round(res.luck * 100)}% luck)`);
+});
 
 // ---------- Property ----------
 const propertyEl = $('#property'), propertyBody = $('#propertyBody');
@@ -1781,7 +1843,7 @@ cv.addEventListener('pointermove', e => {
 cv.addEventListener('pointerup', e => {
   if (insideCabin) {
     if (hitBed(e.clientX, e.clientY)) goToSleep();
-    else if (hitDesk(e.clientX, e.clientY)) openJournal();
+    else if (hitDesk(e.clientX, e.clientY)) openMerge();
     ptr = null; return;
   }
   if (ptr && !ptr.moved) {

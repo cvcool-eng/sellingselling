@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>SellingSelling</title>
-  <link rel="icon" href="icon.svg?v=23" type="image/svg+xml">
-  <link rel="icon" href="icon-32.png?v=23" type="image/png" sizes="32x32">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=23">
-  <meta property="og:image" content="icon-512.png?v=23">
+  <link rel="icon" href="icon.svg?v=24" type="image/svg+xml">
+  <link rel="icon" href="icon-32.png?v=24" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=24">
+  <meta property="og:image" content="icon-512.png?v=24">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=23">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
   <canvas id="world"></canvas>
@@ -84,6 +84,18 @@
     </div>
   </div>
 
+  <!-- Rod workbench (cabin table) -->
+  <div id="merge" class="modal hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Rod Workbench</h2>
+        <div class="pill small sketch"><span class="coin-slot" data-art-slot="fishcoin"></span> <span class="moneyMirror">0</span></div>
+        <button class="close sketch" data-close>✕</button>
+      </div>
+      <div class="panel-body" id="mergeBody"></div>
+    </div>
+  </div>
+
   <!-- Property for sale -->
   <div id="property" class="modal hidden">
     <div class="panel small-panel">
@@ -112,9 +124,9 @@
   <!-- Title / loading screen -->
   <div id="title"><canvas id="titleCanvas"></canvas></div>
 
-  <script src="data.js?v=23"></script>
-  <script src="items-art.js?v=23"></script>
-  <script src="game.js?v=23"></script>
-  <script src="title.js?v=23"></script>
+  <script src="data.js?v=24"></script>
+  <script src="items-art.js?v=24"></script>
+  <script src="game.js?v=24"></script>
+  <script src="title.js?v=24"></script>
 </body>
 </html>

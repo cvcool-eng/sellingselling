@@ -8,6 +8,10 @@ window.GAME_DATA = {
   // Most of one item the backpack can hold (each item type stacks up to this).
   STACK_MAX: 20,
 
+  // Rod merging at the cabin table: merged luck = luck A + luck B - luckPenalty
+  // (never lower than the better of the two). fee = coins per merge.
+  MERGE: { fee: 100000, luckPenalty: 3.0 },
+
   // The plot of land for sale next to the shop.
   PROPERTY: { price: 500000 },
 
