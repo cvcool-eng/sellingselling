@@ -282,15 +282,16 @@ function update(dt) {
       break;
     }
     case 'windup': {
-      const u = clamp(F.t / 0.3, 0, 1);
-      F.angle = lerp(F.aStart, -2.35, easeOutCubic(u));
-      tTilt = -0.13; tsx = 1.08; tsy = 0.92; tBend = -0.08;
+      // gentle backswing to just past straight up, instead of far behind the cube
+      const u = clamp(F.t / 0.32, 0, 1);
+      F.angle = lerp(F.aStart, -1.85, easeInOut(u));
+      tTilt = -0.1; tsx = 1.06; tsy = 0.94; tBend = -0.05;
       if (u >= 1) go('cast');
       break;
     }
     case 'cast': {
-      const u = clamp(F.t / 0.2, 0, 1);
-      F.angle = lerp(-2.35, -0.5, easeInOut(u));
+      const u = clamp(F.t / 0.24, 0, 1);
+      F.angle = lerp(-1.85, -0.5, easeInOut(u));
       tTilt = 0.15; tsx = 0.93; tsy = 1.08; tBend = 0.14;
       // launch from wherever the swinging bobber is right now, so it never jumps
       if (u >= 1) { F.from = [F.dangle.x, F.dangle.y]; go('flying'); }
@@ -330,7 +331,8 @@ function update(dt) {
     }
     case 'reel': {
       const u = clamp(F.t / 0.38, 0, 1);
-      F.angle = lerp(-0.5, -1.95, easeOutBack(u));
+      // smooth pull back that stops where the lift pose starts (no overshoot / snap back)
+      F.angle = lerp(-0.5, -1.5, easeOutCubic(u));
       tTilt = -0.2; tsx = 0.92; tsy = 1.1; tBend = lerp(0.32, -0.06, u);
       F.reelSpin += dt * 30;
       const tp = rodTip();
@@ -340,7 +342,7 @@ function update(dt) {
       break;
     }
     case 'lift':
-      F.angle = approach(F.angle, -1.5, dt * 3); tTilt = -0.06; tHop = Math.abs(Math.sin(F.t * 9)) * 8 * K;
+      F.angle = approach(F.angle, -1.45, dt * 3); tTilt = -0.06; tHop = Math.abs(Math.sin(F.t * 9)) * 8 * K;
       break;
     case 'reveal':
       F.angle = approach(F.angle, -1.3, dt * 4); tHop = Math.abs(Math.sin(time * 7)) * 7 * K;
