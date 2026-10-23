@@ -17,4 +17,6 @@ Everything is in **`data.js`**:
 
 Item drawings live in **`items-art.js`** (one small function per item). A new item with no drawing yet shows its `emoji` until you add one.
 
+After changing any file, bump the `?v=` number on every link in `index.html` so browsers and home-screen apps load the new version instead of a cached copy.
+
 Progress saves automatically in the browser (localStorage).
