@@ -470,18 +470,35 @@ function unlockAudio() {
 }
 window.addEventListener('pointerdown', unlockAudio, true);
 window.addEventListener('keydown', unlockAudio, true);
+// When the tab is in the background the game loop pauses, so keep checking the
+// clock on a timer: the merchant's bell still rings if you're looking away.
+setInterval(() => { if (document.hidden) updateClock(0); }, 1000);
+// The shop-door bell (like walking into a pet store): a cluster of small brass bells
+// jingling as the door swings open, about a second long, settling down at the end.
+const SHOP_BELLS = [2093, 2489, 2794, 3322]; // four little bells, each its own pitch
+const BELL_OVERTONES = [[1, 1, 0.9], [2.32, 0.35, 0.5], [3.85, 0.18, 0.3], [5.6, 0.08, 0.18]]; // [ratio, loudness, ring time]
+function strikeBell(t0, freq, strength, out) {
+  for (const [ratio, vol, ring] of BELL_OVERTONES) {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = freq * ratio * (1 + (Math.random() - 0.5) * 0.004);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol * strength, t0 + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + ring);
+    o.connect(g).connect(out);
+    o.start(t0); o.stop(t0 + ring + 0.05);
+  }
+}
 function playBell() {
   if (!audioCtx || audioCtx.state !== 'running') return;
   const now = audioCtx.currentTime;
-  for (const [start, base] of [[0, 1318.5], [0.22, 1046.5]]) { // two dings: E6 then C6
-    for (const [ratio, vol, decay] of [[1, 0.22, 1.4], [2.76, 0.08, 0.7], [5.4, 0.04, 0.35], [8.93, 0.02, 0.2]]) {
-      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.type = 'sine'; o.frequency.value = base * ratio;
-      g.gain.setValueAtTime(0.0001, now + start);
-      g.gain.exponentialRampToValueAtTime(vol, now + start + 0.008);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + start + decay);
-      o.connect(g).connect(audioCtx.destination);
-      o.start(now + start); o.stop(now + start + decay + 0.05);
+  const master = audioCtx.createGain(); master.gain.value = 0.16;
+  master.connect(audioCtx.destination);
+  // two swings of the door: a big jingle, then a smaller one as it settles
+  for (const [swingStart, swingLen, hits, power] of [[0, 0.45, 11, 1], [0.5, 0.4, 7, 0.55]]) {
+    for (let i = 0; i < hits; i++) {
+      const t = swingStart + (i / hits) * swingLen + Math.random() * 0.03;
+      const fade = 1 - (i / hits) * 0.6;
+      strikeBell(now + t, SHOP_BELLS[Math.floor(Math.random() * SHOP_BELLS.length)], power * fade * (0.6 + Math.random() * 0.4), master);
     }
   }
 }
