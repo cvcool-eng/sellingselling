@@ -73,6 +73,36 @@ function rollItem() {
 const invCount = () => Object.values(S.inventory).reduce((a, b) => a + b, 0);
 
 // ============================================================
+//  Day / night clock + traveling merchant schedule
+//  Runs on the real clock, so every player shares the same days, and a
+//  reload never re-rolls whether the merchant came today.
+// ============================================================
+const DAY_S = window.GAME_DATA.DAY_SECONDS || 600, NIGHT_S = window.GAME_DATA.NIGHT_SECONDS || 600;
+const CYCLE_S = DAY_S + NIGHT_S, FADE_S = 60; // sunrise / sunset length
+const MERCHANT = window.GAME_DATA.MERCHANT || { chance: 0.1, rods: 2, baits: 2 };
+let clockOffset = 0; // seconds; test hook only
+function clock() {
+  const s = Date.now() / 1000 + clockOffset;
+  const day = Math.floor(s / CYCLE_S), t = s - day * CYCLE_S;
+  return { day, t, isDay: t < DAY_S, left: t < DAY_S ? DAY_S - t : CYCLE_S - t };
+}
+// 0 = full day, 1 = full night, with a short sunrise / sunset in between
+function darknessAt(t) {
+  if (t < FADE_S) return 1 - t / FADE_S;
+  if (t < DAY_S) return 0;
+  if (t < DAY_S + FADE_S) return (t - DAY_S) / FADE_S;
+  return 1;
+}
+const merchantVisits = day => mulberry(day * 7919 + 101)() < MERCHANT.chance;
+function merchantStock(day) {
+  const r = mulberry(day * 31337 + 7);
+  const pick = (arr, n) => arr.map(x => [r(), x]).sort((a, b) => a[0] - b[0]).slice(0, n).map(p => p[1]);
+  return { rods: pick(RODS.filter(x => x.merchant), MERCHANT.rods), baits: pick(BAITS.filter(x => x.merchant), MERCHANT.baits) };
+}
+const mmss = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+window.SellingSelling = { setClockOffset: s => { clockOffset = s; } };
+
+// ============================================================
 //  Canvas + hand-drawn line helpers
 // ============================================================
 const cv = document.getElementById('world');
@@ -169,13 +199,15 @@ function buildDecor() {
     const y = L.groundY + 8 * K + r() * (bottom - L.groundY);
     if (insidePond(x, y, 1.12)) continue;
     if (Math.abs(x - L.shopX) < 150 * K && y < L.shopBase + 12 * K) continue;
+    if (x > L.shopX - 260 * K && x < L.shopX - 90 * K && y < L.shopBase + 12 * K) continue; // merchant stall spot
     if (x > L.dockX0 - 10 && x < L.dockX1 + 20 * K && y > L.deckY - 16 * K && y < L.deckY + 40 * K) continue;
     decor.tufts.push({ x, y, s: (0.7 + r() * 0.6) * K, ph: r() * 6 });
     if (r() < 0.22) decor.flowers.push({ x: x + r() * 20 * K, y: y + 4 * K, c: ['#ff8fab', '#ffd166', '#ffffff', '#b28dff'][Math.floor(r() * 4)], ph: r() * 6, s: K });
   }
   decor.tufts.sort((a, b) => a.y - b.y);
 
-  const treeXs = [L.shopX - 250 * K, L.shopX + 210 * K, L.shopX + 330 * K, -170 * K, L.shopX - 420 * K];
+  // trees leave room for the merchant's stall just left of the shop
+  const treeXs = [L.shopX - 330 * K, L.shopX + 210 * K, L.shopX + 330 * K, -170 * K, L.shopX - 480 * K];
   for (const tx of treeXs) decor.trees.push({ x: tx, y: L.groundY + (20 + r() * 25) * K, s: (0.85 + r() * 0.35) * K, ph: r() * 6 });
   decor.trees.sort((a, b) => a.y - b.y);
 
@@ -200,6 +232,9 @@ function buildDecor() {
     const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.85;
     decor.waves.push({ x: P.cx + Math.cos(a) * P.rx * d, y: P.cy + Math.sin(a) * P.ry * d, ph: r() * 6, s: (0.7 + r() * 0.6) * K });
   }
+  // night: stars in the sky and fireflies over the grass
+  decor.stars = Array.from({ length: 70 }, () => ({ x: r(), y: r(), s: 0.6 + r() * 1.4, ph: r() * 6 }));
+  decor.fireflies = Array.from({ length: 18 }, () => ({ x: lerp(L.worldL, W, r()), y: L.groundY + (12 + r() * 50) * K + r() * (H - 140 - L.groundY) * 0.6, v: 0.4 + r() * 0.6, ph: r() * 6 }));
   for (let i = 0; i < 3; i++) decor.fish.push({ ph: r() * 6, v: 0.15 + r() * 0.2, rx: 0.3 + r() * 0.4, ry: 0.2 + r() * 0.4, s: (0.7 + r() * 0.6) * K });
 
   decor.clouds = [{ x: .15, y: .35, s: 1.1, v: 9, ph: 1 }, { x: .55, y: .2, s: .8, v: 6, ph: 2 }, { x: .85, y: .5, s: 1, v: 11, ph: 3 }, { x: 1.2, y: .28, s: .7, v: 7, ph: 4 }];
@@ -399,6 +434,40 @@ function update(dt) {
   const away = cam < -W * 0.3;
   navShop.classList.toggle('hidden', away);
   navDock.classList.toggle('hidden', !away);
+  updateClock(dt);
+}
+
+// ---------- day / night + merchant arrivals ----------
+const world = { dark: 0, t: 0, glow: 0 };
+const merchant = { here: null, walk: 0 };
+let pendingToast = null, lastClockText = '';
+function updateClock(dt) {
+  const ck = clock();
+  world.dark = darknessAt(ck.t);
+  world.t = ck.t;
+  // sunrise / sunset glow: strongest right at dawn and dusk
+  const toEdge = Math.min(ck.t, CYCLE_S - ck.t, Math.abs(ck.t - DAY_S));
+  world.glow = clamp(1 - toEdge / 90, 0, 1);
+  const here = ck.isDay && merchantVisits(ck.day);
+  if (here !== merchant.here) {
+    if (merchant.here === null) { if (here) pendingToast = 'A traveling merchant is visiting the shop today!'; }
+    else if (here) pendingToast = 'A traveling merchant arrived by the shop!';
+    else {
+      pendingToast = 'The traveling merchant packed up and left.';
+      if (modalOpen === merchantEl) closeModal(merchantEl);
+    }
+    merchant.here = here;
+    navShop.textContent = here ? '← Shop + Merchant!' : '← Shop';
+  }
+  // walks in at sunrise and out at sunset
+  const target = here ? clamp(Math.min(ck.t, DAY_S - ck.t) / 4, 0, 1) : 0;
+  merchant.walk = here ? target : Math.max(0, merchant.walk - dt / 2);
+  if (pendingToast && !document.getElementById('title')) { toast(pendingToast); pendingToast = null; }
+  const txt = (ck.isDay ? 'Day ' : 'Night ') + mmss(ck.left);
+  if (txt !== lastClockText) {
+    lastClockText = txt; clockVal.textContent = txt; clockEl.classList.toggle('night', !ck.isDay);
+    if (modalOpen === merchantEl) { const el = document.getElementById('merchantLeft'); if (el) el.textContent = mmss(ck.left); }
+  }
 }
 
 // ============================================================
@@ -419,6 +488,7 @@ function draw() {
   drawFence();
   drawSignpost();
   drawShop();
+  drawMerchant();
   drawPond();
   for (const rd of decor.reeds) drawReed(rd);
   drawDock();
@@ -429,23 +499,107 @@ function draw() {
   drawBubbles();
   ctx.restore();
 
+  drawNight();
   drawItemFly();
 }
 
+// Night: tint the whole scene (warm at sunset, deep blue at night), then add
+// stars, the moon, glowing windows and fireflies on top.
+function glowAt(x, y, r, rgb, a) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function drawNight() {
+  const d = world.dark;
+  if (d <= 0.001) return;
+  const dusk = Math.sin(Math.PI * d) * 0.55;
+  const mix = (day, warm, night) => Math.round(lerp(lerp(day, warm, dusk), night, d));
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = `rgb(${mix(255, 255, 72)},${mix(255, 168, 88)},${mix(255, 120, 165)})`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // stars
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (const s of decor.stars) {
+    const tw = 0.55 + 0.45 * Math.sin(time * 2 + s.ph);
+    const x = ((s.x * W - cam * 0.03) % W + W) % W, y = s.y * L.groundY * 0.85;
+    ctx.fillStyle = `rgba(255,250,225,${d * tw})`;
+    ctx.beginPath(); ctx.arc(x, y, s.s * K * (0.6 + 0.4 * tw), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  // moon travels across the night sky (fades out near the horizon)
+  const q = (world.t - DAY_S) / NIGHT_S;
+  const [mx, my] = skyArc(clamp(q, 0, 1));
+  const ma = d * clamp(Math.sin(Math.PI * clamp(q, 0, 1)) / 0.12, 0, 1);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; glowAt(mx, my, 70 * K, '255,240,190', 0.35 * ma); ctx.restore();
+  ctx.save(); ctx.globalAlpha = ma;
+  sketch(ctx, ellipsePts(mx, my, 24 * K, 24 * K, 22), true, 0.8 * K, 655);
+  ctx.fillStyle = '#fdf3c4'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.4 * K; ctx.stroke();
+  ctx.fillStyle = 'rgba(200,180,120,.5)';
+  for (const [cx, cy, cr] of [[-8, -6, 5], [7, 4, 6], [-4, 10, 3.5]]) { ctx.beginPath(); ctx.arc(mx + cx * K, my + cy * K, cr * K, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+
+  // warm lights + fireflies in the world
+  ctx.save(); ctx.translate(-cam, 0); ctx.globalCompositeOperation = 'lighter';
+  const sw = 210 * K, sh = 125 * K;
+  glowAt(L.shopX - sw / 2 + 57 * K, L.shopBase - sh + 68 * K, 80 * K, '255,200,110', 0.55 * d);
+  if (merchant.walk > 0) { const [lx, ly] = merchantLantern(); glowAt(lx, ly, 60 * K, '255,190,90', 0.7 * d * merchant.walk); }
+  for (const f of decor.fireflies) {
+    const blink = Math.max(0, Math.sin(time * 1.7 + f.ph * 3));
+    if (blink <= 0) continue;
+    const x = f.x + Math.sin(time * f.v + f.ph) * 22 * K, y = f.y + Math.cos(time * f.v * 1.3 + f.ph) * 12 * K;
+    glowAt(x, y, 9 * K, '230,255,140', 0.9 * d * blink);
+  }
+  ctx.restore();
+}
+
+// Sun and moon travel across the sky in an arc: rising on the left, setting on the right.
+function skyArc(p) {
+  const x = lerp(-0.08 * W, 1.08 * W, p) - cam * 0.05;
+  const y = L.groundY + 10 * K - Math.sin(Math.PI * clamp(p, 0, 1)) * (L.groundY - 70 * K);
+  return [x, y];
+}
 function drawSky() {
-  // sun
-  const sx = W * 0.6 - cam * 0.05, sy = 70 * K;
+  // warm sunrise / sunset band along the horizon
+  if (world.glow > 0) {
+    const g = ctx.createLinearGradient(0, 0, 0, L.groundY + 10);
+    g.addColorStop(0, 'rgba(255,190,150,0)');
+    g.addColorStop(0.55, `rgba(255,170,190,${0.35 * world.glow})`);
+    g.addColorStop(1, `rgba(255,150,80,${0.75 * world.glow})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, L.groundY + 10);
+  }
+  // the sun is up during the day (plus a little either side, for rising / setting)
+  let tt = world.t;
+  if (tt > CYCLE_S - FADE_S * 0.5) tt -= CYCLE_S; // just before dawn: start rising from below the hills
+  const p = (tt + FADE_S * 0.5) / (DAY_S + FADE_S);
+  if (p >= 0 && p <= 1) drawSun(p);
+  drawClouds();
+}
+function drawSun(p) {
+  const [sx, sy] = skyArc(p);
+  const low = clamp(1 - Math.sin(Math.PI * p) / 0.45, 0, 1); // 1 when near the horizon
+  const col = `rgb(255,${Math.round(lerp(226, 150, low))},${Math.round(lerp(122, 70, low))})`;
+  const size = 1 + low * 0.25;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, 90 * K * size);
+  g.addColorStop(0, `rgba(255,${Math.round(lerp(230, 160, low))},120,${0.35 + low * 0.25})`); g.addColorStop(1, 'rgba(255,180,100,0)');
+  ctx.fillStyle = g; ctx.fillRect(sx - 90 * K * size, sy - 90 * K * size, 180 * K * size, 180 * K * size);
+  ctx.restore();
   ctx.save(); ctx.translate(sx, sy); ctx.rotate(time * 0.15);
   for (let i = 0; i < 10; i++) {
-    const a = i / 10 * Math.PI * 2, r0 = 34 * K, r1 = (46 + (i % 2) * 8) * K;
+    const a = i / 10 * Math.PI * 2, r0 = 34 * K * size, r1 = (46 + (i % 2) * 8) * K * size;
     sketch(ctx, [[Math.cos(a) * r0, Math.sin(a) * r0], [Math.cos(a) * r1, Math.sin(a) * r1]], false, 0.8 * K, 600 + i);
     ink(ctx, 2.4 * K, 0.8);
   }
   ctx.restore();
-  sketch(ctx, ellipsePts(sx, sy, 26 * K, 26 * K, 22), true, 1 * K, 650);
-  fillInk(ctx, '#ffe27a', 2.6 * K);
-
-  // clouds
+  sketch(ctx, ellipsePts(sx, sy, 26 * K * size, 26 * K * size, 22), true, 1 * K, 650);
+  fillInk(ctx, col, 2.6 * K);
+}
+function drawClouds() {
   for (const c of decor.clouds) {
     const span = W + 400;
     const x = (((c.x * W - cam * 0.25 + time * c.v * K) % span) + span) % span - 200;
@@ -598,6 +752,80 @@ function drawShop() {
   ctx.restore();
 
   if (shopHover) bubble(x, by - h - 110 * K, 'Open shop!');
+}
+
+// ---------- traveling merchant's mini shop (just left of the main shop) ----------
+const merchantX = () => L.shopX - 175 * K;
+function merchantPop() { const w = merchant.walk; return w <= 0 ? 0 : w >= 1 ? 1 : easeOutBack(w); }
+function merchantLantern() { const p = merchantPop(); return [merchantX() + 56 * K * p, L.shopBase - 104 * K * p]; }
+function hitMerchant(wx, wy) {
+  if (merchant.walk < 0.5) return false;
+  const x = merchantX();
+  return wx > x - 78 * K && wx < x + 78 * K && wy > L.shopBase - 160 * K && wy < L.shopBase + 8 * K;
+}
+let merchantHover = false;
+function drawMerchant() {
+  const p = merchantPop();
+  if (p <= 0) return;
+  const x = merchantX(), by = L.shopBase;
+  ctx.save(); ctx.translate(x, by); ctx.scale(p * (merchantHover ? 1.04 : 1), p * (merchantHover ? 1.04 : 1));
+  const u = K;
+  ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.beginPath(); ctx.ellipse(0, 4 * u, 80 * u, 9 * u, 0, 0, Math.PI * 2); ctx.fill();
+
+  // posts
+  for (const px of [-58, 52]) { sketch(ctx, rectPts((px - 3) * u, -134 * u, 7 * u, 90 * u), true, 0.6 * u, 800 + px); fillInk(ctx, '#87582e', 2.2 * u); }
+
+  // the merchant: a cube with round glasses, reading a book behind the counter
+  const bob = Math.sin(time * 2) * 1.5 * u, s = 46 * u, cy = -46 * u + bob;
+  sketch(ctx, [[-s / 2, cy - s], [s / 2 + u, cy - s - u], [s / 2, cy], [-s / 2 + u, cy + u]], true, 0.8 * u, 810);
+  fillInk(ctx, '#fff', 2.8 * u);
+  const ey = cy - s * 0.62;
+  for (const ex of [-10, 10]) {
+    ctx.beginPath(); ctx.arc(ex * u, ey, 7 * u, 0, Math.PI * 2); ctx.fillStyle = 'rgba(200,230,255,.5)'; ctx.fill(); ink(ctx, 2.2 * u);
+    ctx.beginPath(); ctx.ellipse(ex * u, ey + u, 1.8 * u, 2.6 * u, 0, 0, Math.PI * 2); ctx.fillStyle = INK; ctx.fill();
+  }
+  sketch(ctx, [[-3 * u, ey], [3 * u, ey]], false, 0.2 * u, 811); ink(ctx, 2 * u);
+  sketch(ctx, [[-17 * u, ey - u], [-23 * u, ey - 3 * u]], false, 0.2 * u, 812); ink(ctx, 1.8 * u);
+  sketch(ctx, [[17 * u, ey - u], [23 * u, ey - 3 * u]], false, 0.2 * u, 813); ink(ctx, 1.8 * u);
+  ctx.beginPath(); ctx.arc(0, ey + 9 * u, 5 * u, 0.15 * Math.PI, 0.85 * Math.PI); ink(ctx, 2 * u);
+  // counter
+  sketch(ctx, rectPts(-66 * u, -44 * u, 132 * u, 44 * u), true, 0.9 * u, 820); fillInk(ctx, '#b77a43', 2.8 * u);
+  sketch(ctx, rectPts(-70 * u, -50 * u, 140 * u, 9 * u), true, 0.7 * u, 821); fillInk(ctx, '#d9a066', 2.4 * u);
+  for (const yy of [-28, -14]) { sketch(ctx, [[-62 * u, yy * u], [62 * u, yy * u]], false, 0.4 * u, 822 + yy); ink(ctx, 1.2 * u, 0.3); }
+  // open book he's reading, propped up on the counter in front of him
+  const bk = -68 * u + bob * 0.5;
+  sketch(ctx, [[-22 * u, bk + 4 * u], [0, bk + 8 * u], [22 * u, bk + 4 * u], [22 * u, bk + 18 * u], [0, bk + 22 * u], [-22 * u, bk + 18 * u]], true, 0.4 * u, 814);
+  fillInk(ctx, '#7b3fe4', 2.2 * u);
+  sketch(ctx, [[-19 * u, bk], [0, bk + 5 * u], [0, bk + 19 * u], [-19 * u, bk + 14 * u]], true, 0.4 * u, 815); fillInk(ctx, '#fffaf0', 1.8 * u);
+  sketch(ctx, [[19 * u, bk], [0, bk + 5 * u], [0, bk + 19 * u], [19 * u, bk + 14 * u]], true, 0.4 * u, 816); fillInk(ctx, '#fffaf0', 1.8 * u);
+  for (const ly of [4, 8, 12]) { sketch(ctx, [[-15 * u, bk + ly * u], [-4 * u, bk + (ly + 3) * u]], false, 0.15 * u, 817 + ly); ink(ctx, 1 * u, 0.5); sketch(ctx, [[4 * u, bk + (ly + 3) * u], [15 * u, bk + ly * u]], false, 0.15 * u, 819 + ly); ink(ctx, 1 * u, 0.5); }
+  // goods on the counter: little jars and a gem
+  for (const [gx, col] of [[-52, '#b5ff7a'], [-40, '#ff8fab'], [46, '#7fd8ff']]) {
+    sketch(ctx, rectPts((gx - 4) * u, -62 * u, 9 * u, 12 * u), true, 0.3 * u, 830 + gx); fillInk(ctx, col, 1.8 * u);
+  }
+  sketch(ctx, [[54 * u, -50 * u], [60 * u, -60 * u], [66 * u, -50 * u], [60 * u, -45 * u]], true, 0.3 * u, 835); fillInk(ctx, '#ffd84d', 1.8 * u);
+
+  // purple banner with gold fringe
+  const bw = 150 * u, bt = -150 * u, bh = 26 * u;
+  sketch(ctx, rectPts(-bw / 2, bt, bw, bh), true, 0.8 * u, 840); fillInk(ctx, '#7b3fe4', 2.8 * u);
+  for (let i = 0; i < 10; i++) {
+    const x0 = -bw / 2 + i * bw / 10;
+    sketch(ctx, [[x0, bt + bh], [x0 + bw / 10, bt + bh], [x0 + bw / 20, bt + bh + 9 * u]], true, 0.3 * u, 841 + i);
+    fillInk(ctx, i % 2 ? '#ffcf3f' : '#9b6cf0', 1.6 * u);
+  }
+  ctx.fillStyle = '#fff'; ctx.font = `${17 * u}px ${HAND_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('MERCHANT', 0, bt + bh / 2 + u);
+  // hanging lantern
+  sketch(ctx, [[56 * u, -124 * u], [56 * u, -112 * u]], false, 0.2 * u, 850); ink(ctx, 1.4 * u);
+  sketch(ctx, rectPts(51 * u, -112 * u, 10 * u, 14 * u), true, 0.3 * u, 851); fillInk(ctx, '#ffe27a', 2 * u);
+  // a little magic sparkle
+  for (let i = 0; i < 3; i++) {
+    const tw = (Math.sin(time * 2.5 + i * 2) + 1) / 2, sx = (-30 + i * 30) * u, sy = (-170 - (i % 2) * 10) * u, r = 5 * u * tw;
+    ctx.strokeStyle = '#b085f5'; ctx.lineWidth = 1.8 * u;
+    ctx.beginPath(); ctx.moveTo(sx - r, sy); ctx.lineTo(sx + r, sy); ctx.moveTo(sx, sy - r); ctx.lineTo(sx, sy + r); ctx.stroke();
+  }
+  ctx.restore();
+  if (merchantHover) bubble(x, by - 196 * K, 'Traveling Merchant!');
 }
 
 function drawPond() {
@@ -941,6 +1169,7 @@ const moneyEl = $('#money'), moneyVal = $('#moneyVal'), luckVal = $('#luckVal'),
 const backpackEl = $('#backpack'), revealEl = $('#reveal'), flashEl = $('#flash'), toastEl = $('#toast');
 const shopEl = $('#shop'), shopBody = $('#shopBody'), bagEl = $('#bag'), bagBody = $('#bagBody');
 const navShop = $('#navShop'), navDock = $('#navDock');
+const clockEl = $('#clock'), clockVal = $('#clockVal'), merchantEl = $('#merchant'), merchantBody = $('#merchantBody');
 const rodIconCv = $('#rodIcon'), baitEmoji = $('#baitEmoji'), baitCount = $('#baitCount'), slotBait = $('#slotBait'), slotRod = $('#slotRod');
 
 function setMoneyText(v) {
@@ -1129,33 +1358,75 @@ function doSell(btn) {
   bumpMoney(); refreshHUD(); renderShop();
 }
 function speedText(r) { return r.speed && r.speed < 1 ? `${+(1 / r.speed).toFixed(1)}x faster` : 'normal speed'; }
+const exclusiveTag = x => x.merchant ? '<span class="tag">Merchant exclusive</span>' : '';
+function rodCard(r) {
+  const owned = S.ownedRods.includes(r.id), eq = S.rod === r.id;
+  let btn;
+  if (eq) btn = `<button class="btn sketch btn-equipped" disabled>Equipped ✓</button>`;
+  else if (owned) btn = `<button class="btn sketch btn-equip" data-equip-rod="${r.id}">Equip</button>`;
+  else btn = `<button class="btn sketch ${S.money >= r.price ? 'btn-buy' : 'btn-poor'}" data-buy-rod="${r.id}">Buy · ${COIN()} ${fmt(r.price)}</button>`;
+  return `<div class="card ${eq ? 'equipped' : ''} ${r.merchant ? 'exclusive' : ''}">${exclusiveTag(r)}
+    <canvas width="240" height="160" data-rod="${r.id}"></canvas>
+    <div class="card-name">${r.name}</div><div class="card-desc">${r.desc}</div>
+    <div class="stats"><span>🍀 +${Math.round(r.luck * 100)}% luck</span><span>⚡ ${speedText(r)}</span></div>${btn}</div>`;
+}
+function baitCard(b) {
+  const have = S.baits[b.id] || 0, eq = S.bait === b.id;
+  let btns = `<button class="btn sketch ${S.money >= b.price ? 'btn-buy' : 'btn-poor'}" data-buy-bait="${b.id}">Buy x${b.uses} · ${COIN()} ${fmt(b.price)}</button>`;
+  if (eq) btns += `<button class="btn sketch btn-equipped" data-unequip-bait>Equipped ✓ (tap to remove)</button>`;
+  else if (have) btns += `<button class="btn sketch btn-equip" data-equip-bait="${b.id}">Equip</button>`;
+  return `<div class="card ${eq ? 'equipped' : ''} ${b.merchant ? 'exclusive' : ''}">${exclusiveTag(b)}
+    <div class="icon">${ItemArt.html(b.id, b.emoji)}</div>
+    <div class="card-name">${b.name}</div><div class="card-desc">${b.desc}</div>
+    <div class="stats"><span>🍀 +${Math.round(b.luck * 100)}% luck</span><span>⚡ ${speedText(b)}</span><span>🎒 You have ${have}</span></div>${btns}</div>`;
+}
+// merchant rods / baits are only sold by the traveling merchant, but still show up
+// in the regular shop once you own them (so you can re-equip or restock)
 function renderRods() {
-  shopBody.innerHTML = `<p class="tab-intro">Fancier poles = better luck and faster bites!</p><div class="cards">` + RODS.map(r => {
-    const owned = S.ownedRods.includes(r.id), eq = S.rod === r.id;
-    let btn;
-    if (eq) btn = `<button class="btn sketch btn-equipped" disabled>Equipped ✓</button>`;
-    else if (owned) btn = `<button class="btn sketch btn-equip" data-equip-rod="${r.id}">Equip</button>`;
-    else btn = `<button class="btn sketch ${S.money >= r.price ? 'btn-buy' : 'btn-poor'}" data-buy-rod="${r.id}">Buy · ${COIN()} ${fmt(r.price)}</button>`;
-    return `<div class="card ${eq ? 'equipped' : ''}">
-      <canvas width="240" height="160" data-rod="${r.id}"></canvas>
-      <div class="card-name">${r.name}</div><div class="card-desc">${r.desc}</div>
-      <div class="stats"><span>🍀 +${Math.round(r.luck * 100)}% luck</span><span>⚡ ${speedText(r)}</span></div>${btn}</div>`;
-  }).join('') + '</div>';
+  const list = RODS.filter(r => !r.merchant || S.ownedRods.includes(r.id));
+  shopBody.innerHTML = `<p class="tab-intro">Fancier poles = better luck and faster bites!</p><div class="cards">` + list.map(rodCard).join('') + '</div>';
   shopBody.querySelectorAll('canvas[data-rod]').forEach(c => drawRodIcon(c, ROD[c.dataset.rod], 'shop'));
 }
 function renderBait() {
-  shopBody.innerHTML = `<p class="tab-intro">Bait adds luck and faster bites to every cast until it runs out.</p><div class="cards">` + BAITS.map(b => {
-    const have = S.baits[b.id] || 0, eq = S.bait === b.id;
-    let btns = `<button class="btn sketch ${S.money >= b.price ? 'btn-buy' : 'btn-poor'}" data-buy-bait="${b.id}">Buy x${b.uses} · ${COIN()} ${fmt(b.price)}</button>`;
-    if (eq) btns += `<button class="btn sketch btn-equipped" data-unequip-bait>Equipped ✓ (tap to remove)</button>`;
-    else if (have) btns += `<button class="btn sketch btn-equip" data-equip-bait="${b.id}">Equip</button>`;
-    return `<div class="card ${eq ? 'equipped' : ''}">
-      <div class="icon">${ItemArt.html(b.id, b.emoji)}</div>
-      <div class="card-name">${b.name}</div><div class="card-desc">${b.desc}</div>
-      <div class="stats"><span>🍀 +${Math.round(b.luck * 100)}% luck</span><span>⚡ ${speedText(b)}</span><span>🎒 You have ${have}</span></div>${btns}</div>`;
-  }).join('') + '</div>';
+  const list = BAITS.filter(b => !b.merchant || S.baits[b.id]);
+  shopBody.innerHTML = `<p class="tab-intro">Bait adds luck and faster bites to every cast until it runs out.</p><div class="cards">` + list.map(baitCard).join('') + '</div>';
 }
 function cantAfford(btn) { toast('Not enough coins!'); btn.classList.remove('shake'); void btn.offsetWidth; btn.classList.add('shake'); }
+
+// Buy / equip buttons on rod and bait cards (shared by the shop and the merchant).
+// Returns true when the click was one of these buttons.
+function handleGearButton(t) {
+  if (t.dataset.buyRod) {
+    const r = ROD[t.dataset.buyRod];
+    if (S.money < r.price) { cantAfford(t); return true; }
+    S.money -= r.price; S.ownedRods.push(r.id); S.rod = r.id; save();
+    toast(`You bought the ${r.name}!`); bumpMoney(); refreshHUD(); return true;
+  }
+  if (t.dataset.equipRod) { S.rod = t.dataset.equipRod; save(); refreshHUD(); return true; }
+  if (t.dataset.buyBait) {
+    const b = BAIT[t.dataset.buyBait];
+    if (S.money < b.price) { cantAfford(t); return true; }
+    S.money -= b.price; S.baits[b.id] = (S.baits[b.id] || 0) + b.uses;
+    if (!S.bait) S.bait = b.id;
+    save(); toast(`+${b.uses} ${b.name}!`); bumpMoney(); refreshHUD(); return true;
+  }
+  if (t.dataset.equipBait) { S.bait = t.dataset.equipBait; save(); refreshHUD(); return true; }
+  if (t.hasAttribute('data-unequip-bait')) { S.bait = null; save(); refreshHUD(); return true; }
+  return false;
+}
+
+// ---------- Traveling merchant ----------
+function openMerchant() { renderMerchant(); openModal(merchantEl); setMoneyText(shownMoney); }
+function renderMerchant() {
+  const ck = clock(), st = merchantStock(ck.day);
+  merchantBody.innerHTML = `<p class="tab-intro">Rare goods from far away, and not cheap! I pack up when night falls, in <b id="merchantLeft">${mmss(ck.left)}</b>.</p>
+    <div class="cards">${st.rods.map(rodCard).join('')}${st.baits.map(baitCard).join('')}</div>`;
+  merchantBody.querySelectorAll('canvas[data-rod]').forEach(c => drawRodIcon(c, ROD[c.dataset.rod], 'shop'));
+}
+merchantEl.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (handleGearButton(t)) renderMerchant();
+});
 
 shopEl.addEventListener('click', e => {
   const t = e.target.closest('button, .tile'); if (!t) return;
@@ -1168,22 +1439,7 @@ shopEl.addEventListener('click', e => {
     renderShop(); return;
   }
   if (act === 'sell') { doSell(t); return; }
-  if (t.dataset.buyRod) {
-    const r = ROD[t.dataset.buyRod];
-    if (S.money < r.price) return cantAfford(t);
-    S.money -= r.price; S.ownedRods.push(r.id); S.rod = r.id; save();
-    toast(`You bought the ${r.name}!`); bumpMoney(); refreshHUD(); renderShop(); return;
-  }
-  if (t.dataset.equipRod) { S.rod = t.dataset.equipRod; save(); refreshHUD(); renderShop(); return; }
-  if (t.dataset.buyBait) {
-    const b = BAIT[t.dataset.buyBait];
-    if (S.money < b.price) return cantAfford(t);
-    S.money -= b.price; S.baits[b.id] = (S.baits[b.id] || 0) + b.uses;
-    if (!S.bait) S.bait = b.id;
-    save(); toast(`+${b.uses} ${b.name}!`); bumpMoney(); refreshHUD(); renderShop(); return;
-  }
-  if (t.dataset.equipBait) { S.bait = t.dataset.equipBait; save(); refreshHUD(); renderShop(); return; }
-  if (t.hasAttribute('data-unequip-bait')) { S.bait = null; save(); refreshHUD(); renderShop(); return; }
+  if (handleGearButton(t)) renderShop();
 });
 
 // ---------- Backpack panel ----------
@@ -1248,19 +1504,20 @@ cv.addEventListener('pointermove', e => {
     if (ptr.moved) camTarget = clampCam(ptr.cam - dx);
   }
   const wx = e.clientX + cam, wy = e.clientY;
-  cubeHover = hitCube(wx, wy); shopHover = hitShop(wx, wy);
-  cv.style.cursor = (cubeHover || shopHover) ? 'pointer' : (ptr && ptr.moved ? 'grabbing' : 'default');
+  cubeHover = hitCube(wx, wy); merchantHover = hitMerchant(wx, wy); shopHover = !merchantHover && hitShop(wx, wy);
+  cv.style.cursor = (cubeHover || shopHover || merchantHover) ? 'pointer' : (ptr && ptr.moved ? 'grabbing' : 'default');
 });
 cv.addEventListener('pointerup', e => {
   if (ptr && !ptr.moved) {
     const wx = e.clientX + cam, wy = e.clientY;
     if (hitCube(wx, wy)) startFishing();
+    else if (hitMerchant(wx, wy)) openMerchant();
     else if (hitShop(wx, wy)) openShop();
   }
   ptr = null;
 });
 cv.addEventListener('pointercancel', () => { ptr = null; });
-cv.addEventListener('pointerleave', () => { shopHover = cubeHover = false; });
+cv.addEventListener('pointerleave', () => { shopHover = cubeHover = merchantHover = false; });
 window.addEventListener('wheel', e => {
   if (modalOpen || revealOpen) return;
   e.preventDefault();

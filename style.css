@@ -262,6 +262,15 @@ body.shake canvas#world { animation: shake .45s; }
 .modal .card-desc { font-size: 13px; min-height: 30px; }
 .modal .stats { font-size: 12px; gap: 4px; margin-bottom: 4px; }
 
+/* Day / night clock */
+.clock-ic { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; background: #ffe27a; border: 2px solid var(--ink); }
+#clock.night .clock-ic { background: #2b3a78; box-shadow: inset 4px -2px 0 0 #fdf3c4; }
+#clock.night { background: #e9ecff; }
+
+/* Merchant cards */
+.card.exclusive { background: #f7f0ff; }
+.card .tag { font-size: 12px; background: #b085f5; color: #fff; border: 2px solid var(--ink); border-radius: 8px; padding: 0 6px; transform: rotate(-3deg); }
+
 /* Title screen */
 #title { position: fixed; inset: 0; z-index: 200; cursor: pointer; background: #fff; overflow: hidden; }
 #title canvas { display: block; width: 100%; height: 100%; transform-origin: 34% 60%; }

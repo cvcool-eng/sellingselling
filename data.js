@@ -5,6 +5,14 @@ window.GAME_DATA = {
   // How strongly luck pushes rolls toward rarer tiers (higher = stronger).
   LUCK_POWER: 0.5,
 
+  // Day / night cycle, in seconds.
+  DAY_SECONDS: 600,
+  NIGHT_SECONDS: 600,
+
+  // Traveling merchant: chance to show up each morning, and how many of his
+  // rods / baits he brings per visit (picked from the `merchant: true` entries below).
+  MERCHANT: { chance: 0.10, rods: 2, baits: 2 },
+
   // Worst -> best. "weight" = base chance (out of the total of all weights).
   RARITIES: [
     { name: 'Common',    color: '#8a8f98', weight: 50 },
@@ -80,6 +88,10 @@ window.GAME_DATA = {
     { id: 'cosmic',     name: 'Cosmic Rod',     price: 900000,   luck: 4.5,  speed: 0.50, colors: ['#3a1c71', '#ff8fb1'], grip: '#101030', accent: '#ffd36e', desc: 'Forged from a shooting star.', sparkle: true },
     { id: 'lava',       name: 'Lava Rod',       price: 2000000,  luck: 6.0,  speed: 0.44, colors: ['#7a1500', '#ff9a2e'], grip: '#2b1a12', accent: '#ffd84d', desc: 'Still warm. Do not touch the tip.', sparkle: true },
     { id: 'void',       name: 'Void Rod',       price: 4000000,  luck: 8.0,  speed: 0.38, colors: ['#120024', '#7b3fe4'], grip: '#000000', accent: '#d0a8ff', desc: 'Fishes from somewhere else entirely.', sparkle: true },
+    // Traveling merchant only
+    { id: 'tidecaller', name: 'Tidecaller Rod', price: 650000,   luck: 4.0,  speed: 0.48, colors: ['#0f6e8c', '#7ff0e0'], grip: '#0b3340', accent: '#e9fffb', desc: 'Calls the rare ones in with the tide.', sparkle: true, merchant: true },
+    { id: 'starfall',   name: 'Starfall Rod',   price: 3000000,  luck: 7.0,  speed: 0.40, colors: ['#1b1f5e', '#ffe680'], grip: '#0d0f30', accent: '#fff3b0', desc: 'Made from a star that fell in a pond.', sparkle: true, merchant: true },
+    { id: 'rainbowrod', name: 'Rainbow Rod',    price: 9000000,  luck: 12.0, speed: 0.30, colors: ['#ff5f6d', '#7fd8ff'], grip: '#3d2a7a', accent: '#ffe066', desc: 'The best rod there is. Very hard to find.', sparkle: true, merchant: true },
   ],
 
   // Bait is bought in packs of `uses` casts.
@@ -94,5 +106,9 @@ window.GAME_DATA = {
     { id: 'stardust', name: 'Stardust',      emoji: '💫', price: 50000,  uses: 10, luck: 2.00, speed: 0.50, desc: 'A pinch of the universe.' },
     { id: 'jelly',    name: 'Rainbow Jelly', emoji: '🌈', price: 120000, uses: 10, luck: 2.60, speed: 0.42, desc: 'Jiggly, glowing, irresistible.' },
     { id: 'comet',    name: 'Comet Chunk',   emoji: '☄️', price: 300000, uses: 10, luck: 3.30, speed: 0.35, desc: 'A piece of a passing comet.' },
+    // Traveling merchant only
+    { id: 'mystery',  name: 'Mystery Bait',  emoji: '❓', price: 120000, uses: 10, luck: 2.80, speed: 0.42, desc: 'Nobody knows what is in it. Fish love it.', merchant: true },
+    { id: 'goldlure', name: 'Golden Lure',   emoji: '🪝', price: 400000, uses: 10, luck: 4.00, speed: 0.32, desc: 'A shiny lure that never runs dry of luck.', merchant: true },
+    { id: 'krakenink',name: 'Kraken Ink',    emoji: '🦑', price: 900000, uses: 10, luck: 5.50, speed: 0.26, desc: 'One drop and the deep wakes up.', merchant: true },
   ],
 };
