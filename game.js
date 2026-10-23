@@ -875,7 +875,8 @@ function room() {
     R, x, y, rw, rh, inset, wallH, floorTop,
     bx: x + inset, bw: rw - inset * 2, cx: x + rw / 2,
     // bed lies sideways: head against the left wall, foot pointing right toward the door
-    bed: { x: x + inset * 0.68 + 18 * R, y: floorTop + 26 * R, w: 200 * R, d: 104 * R },
+    // (in the bottom-left corner of the room)
+    bed: { x: x + inset * 0.22 + 22 * R, y: y + rh - 140 * R, w: 200 * R, d: 104 * R },
     desk: { x: x + rw - inset - 270 * R, y: floorTop - 10 * R, w: 230 * R, d: 70 * R, h: 44 * R },
   };
 }
@@ -1014,9 +1015,10 @@ function drawInterior() {
   // stool (little 3D block) in front of the bench
   block(dk.x + 80 * R, dk.y + dk.d + dk.h + 40 * R, 46 * R, 30 * R, 18 * R, '#8b5a2b', '#5a3720', R, 1089);
 
-  // plant in the front-left corner
-  block(x + 60 * R, fb - 80 * R, 34 * R, 14 * R, 26 * R, '#b85f3f', '#9a4b30', R, 1090);
-  for (const [ox, oy] of [[-10, -14], [8, -18], [0, -26], [16, -6], [-16, -4]]) { sketch(ctx, ellipsePts(x + 77 * R + ox * R, fb - 84 * R + oy * R, 10 * R, 7 * R, 10), true, 0.3 * R, 1092 + ox); fillInk(ctx, '#6cbf4a', 1.8 * R); }
+  // plant in the back-left corner
+  const plx = bx + 14 * R, ply = floorTop + 16 * R;
+  block(plx, ply, 34 * R, 14 * R, 26 * R, '#b85f3f', '#9a4b30', R, 1090);
+  for (const [ox, oy] of [[-10, -14], [8, -18], [0, -26], [16, -6], [-16, -4]]) { sketch(ctx, ellipsePts(plx + 17 * R + ox * R, ply - 4 * R + oy * R, 10 * R, 7 * R, 10), true, 0.3 * R, 1092 + ox); fillInk(ctx, '#6cbf4a', 1.8 * R); }
 
   // the cube on the rug
   const cs = 56 * R, ccx = r.cx, cy = rugY + 10 * R + Math.sin(time * 2) * 2 * R;
