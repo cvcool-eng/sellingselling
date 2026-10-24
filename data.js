@@ -6,7 +6,7 @@ window.GAME_DATA = {
   LUCK_POWER: 0.5,
 
   // Most of one item the backpack can hold (each item type stacks up to this).
-  STACK_MAX: 20,
+  STACK_MAX: Infinity, // no limit on how many of one item you can hold
 
   // Rod merging at the cabin table: merged luck = luck A + luck B - luckPenalty
   // (never lower than the better of the two); speed boosts add up with no penalty

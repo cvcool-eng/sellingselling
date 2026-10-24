@@ -1614,7 +1614,7 @@ function showReveal(item) {
       <div class="reveal-worth">Worth ${COIN()} ${fmt(item.price)}</div>
       ${F.itemFull
         ? `<div class="reveal-full">Your ${item.name} stack is full (${STACK_MAX}/${STACK_MAX})! It slipped back into the pond. Sell some at the shop.</div>`
-        : `<div class="reveal-stack">In your backpack: ${S.inventory[item.id]}/${STACK_MAX}</div>`}
+        : `<div class="reveal-stack">In your backpack: ${S.inventory[item.id]}</div>`}
       <div class="reveal-hint">tap anywhere to continue</div>
     </div>`;
   revealEl.classList.remove('hidden', 'closing');
@@ -1938,7 +1938,7 @@ function renderBag() {
     <div class="pick-grid rods-grid">${S.ownedRods.filter(id => ROD[id]).map(id => { const r = ROD[id], eq = S.rod === id; return `<div class="pick ${eq ? 'sel' : ''}">
       <canvas width="192" height="128" data-rod="${id}"></canvas><div class="pn">${r.name}</div><div class="pl">🍀 +${Math.round(r.luck * 100)}% · ⚡ ${speedText(r)}</div>
       ${eq ? '<button class="btn sketch btn-equipped" disabled>Equipped ✓</button>' : `<button class="btn sketch btn-equip" data-bag-equip="${id}">Equip</button>`}</div>`; }).join('')}</div>
-    <h3 class="section">Items (${invCount()}) <span class="stack-note">up to ${STACK_MAX} of each</span></h3>
+    <h3 class="section">Items (${invCount()})</h3>
     <div class="grid">${ids.length ? ids.map(id => tileHTML(id, S.inventory[id], '', true)).join('') : '<div class="empty-note">Your backpack is empty. Tap the cube to fish!</div>'}</div>
     <div class="section"><h3>Collection (${found}/${ITEMS.length})</h3>
       <div class="grid">${ITEMS.slice().sort((a, b) => a.rarity - b.rarity).map(it => S.discovered[it.id]
