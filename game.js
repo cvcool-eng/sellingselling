@@ -124,7 +124,7 @@ function merchantStock(day) {
   };
 }
 const mmss = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-window.SellingSelling = { setClockOffset: s => { clockOffset = s; }, sleep: () => goToSleep(), merchantHere: () => merchant.here, tick: () => updateClock(0) }; // test hooks
+window.SellingSelling = { setClockOffset: s => { clockOffset = s; }, sleep: () => goToSleep(), merchantHere: () => merchant.here, tick: () => updateClock(0), merge: () => openMerge() }; // test hooks
 
 // ============================================================
 //  Canvas + hand-drawn line helpers
@@ -1860,8 +1860,8 @@ const MERGE = window.GAME_DATA.MERGE || { fee: 100000, luckPenalty: 3 };
 const mergeEl = $('#merge'), mergeBody = $('#mergeBody');
 let mergePick = [];
 const shortName = r => r.name.replace(/ Rod$/, '').split('-')[0].split(' ')[0];
-// merged rods can't be merged again (and the Basic Rod is always kept)
-function mergeCandidates() { return S.ownedRods.filter(id => id !== RODS[0].id && ROD[id] && !ROD[id].merged).map(id => ROD[id]); }
+// any rod can be merged, merged ones too (the Basic Rod is always kept)
+function mergeCandidates() { return S.ownedRods.filter(id => id !== RODS[0].id && ROD[id]).map(id => ROD[id]); }
 function mergedRod(a, b) {
   // take away the normal penalty, but if that would erase the gain over the better
   // rod, use a smaller one (-100%, then -50%) so merging still pays off
@@ -1881,9 +1881,9 @@ function openMerge() { mergePick = []; renderMerge(); openModal(mergeEl); setMon
 function renderMerge() {
   const list = mergeCandidates();
   mergePick = mergePick.filter(id => list.some(r => r.id === id));
-  let html = `<p class="tab-intro">Pick two rods to fuse into one. Luck adds up, minus ${Math.round(MERGE.luckPenalty * 100)}% (or just 100% / 50% if that would cancel the gain). Speed adds up fully. Both rods are used up, and a merged rod can't be merged again.</p>`;
+  let html = `<p class="tab-intro">Pick two rods to fuse into one. Luck adds up, minus ${Math.round(MERGE.luckPenalty * 100)}% (or just 100% / 50% if that would cancel the gain). Speed adds up fully. Both rods are used up. Merged rods can be merged again!</p>`;
   if (list.length < 2) {
-    html += `<div class="empty-note">You need at least 2 rods to merge (not counting the Basic Rod or rods that were already merged). Buy more at the shop!</div>`;
+    html += `<div class="empty-note">You need at least 2 rods to merge (not counting the Basic Rod). Buy more at the shop!</div>`;
   } else {
     html += `<div class="pick-grid">${list.map(r => `<div class="pick ${mergePick.includes(r.id) ? 'sel' : ''}" data-pick="${r.id}">
       <canvas width="192" height="128" data-rod="${r.id}"></canvas><div class="pn">${r.name}</div><div class="pl">🍀 +${Math.round(r.luck * 100)}%</div></div>`).join('')}</div>`;
