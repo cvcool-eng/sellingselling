@@ -4,6 +4,7 @@
 const { RARITIES, ITEMS, RODS, BAITS, LUCK_POWER } = window.GAME_DATA;
 const byId = arr => Object.fromEntries(arr.map(o => [o.id, o]));
 const ITEM = byId(ITEMS), ROD = byId(RODS), BAIT = byId(BAITS);
+const ACCS = window.GAME_DATA.ACCESSORIES || [], ACC = byId(ACCS);
 const INK = '#1b1b1b';
 const STACK_MAX = window.GAME_DATA.STACK_MAX || 20; // most of one item the backpack holds
 const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
@@ -16,6 +17,7 @@ const SAVE_KEY = 'lucky-pond-save-v1';
 const freshState = () => ({
   money: 0, inventory: {}, ownedRods: [RODS[0].id], rod: RODS[0].id,
   baits: {}, bait: null, discovered: {}, caught: 0, customRods: [],
+  ownedAcc: [], head: null, face: null, // accessories: one head + one face item worn at a time
 });
 function loadState() {
   try {
@@ -25,6 +27,8 @@ function loadState() {
       for (const r of s.customRods || []) ROD[r.id] = r; // merged rods live in the save
       if (!ROD[s.rod]) s.rod = RODS[0].id;
       if (s.bait && !BAIT[s.bait]) s.bait = null;
+      if (s.head && !ACC[s.head]) s.head = null;
+      if (s.face && !ACC[s.face]) s.face = null;
       // old junk items became fish: move them over to the fish that replaced them
       for (const it of ITEMS) {
         if (!it.replaces) continue;
@@ -64,7 +68,7 @@ function mulberry(seed) {
 
 function currentLuck() {
   const b = S.bait && BAIT[S.bait];
-  return ROD[S.rod].luck + (b ? b.luck : 0);
+  return ROD[S.rod].luck + (b ? b.luck : 0) + (S.head ? ACC[S.head].luck : 0) + (S.face ? ACC[S.face].luck : 0);
 }
 function rarityOdds() {
   const luck = currentLuck();
@@ -1320,6 +1324,8 @@ function drawCube() {
   sketch(ctx, [[-h - 4 * K, -3 * K], [-h + 1 * K, 5 * K]], false, 0.5 * K, 22); ink(ctx, 1.8 * K, 0.7);
   sketch(ctx, [[h + 3 * K, -s * 0.55], [h + 1 * K, -s * 0.3]], false, 0.5 * K, 23); ink(ctx, 1.4 * K, 0.5);
   drawFace(s);
+  if (S.face) drawAcc(ctx, S.face, s);
+  if (S.head) drawAcc(ctx, S.head, s);
   ctx.restore();
 
   if (S.caught === 0 && F.state === 'idle') {
@@ -1329,6 +1335,31 @@ function drawCube() {
     sketch(ctx, [[L.cubeX, by + 12 * K], [L.cubeX + 2 * K, by + 28 * K]], false, 0.5 * K, 31); ink(ctx, 2.2 * K);
     sketch(ctx, [[L.cubeX - 5 * K, by + 21 * K], [L.cubeX + 2 * K, by + 29 * K], [L.cubeX + 8 * K, by + 21 * K]], false, 0.5 * K, 32); ink(ctx, 2.2 * K);
   }
+}
+// Draw an accessory on a cube of size s whose bottom-center is at (0, 0).
+// Accessory art is drawn on a 100x100 grid: face items fit the cube face to the
+// box 10..90; hats sit on the cube's top edge at y=80, spanning x=22..78.
+// (The art canvas covers grid units -5.56..105.56 because of its small inset.)
+function drawAcc(g, id, s) {
+  const a = ACC[id], cv = a && ItemArt.canvas(id, ItemArt.frame); if (!cv) return;
+  const head = a.slot === 'head', u = s / (head ? 56 : 80), ox = head ? 22 : 10, oy = head ? 80 : 10;
+  g.drawImage(cv, -s / 2 + (-5.556 - ox) * u, -s + (-5.556 - oy) * u, 111.11 * u, 111.11 * u);
+}
+// Little cube wearing an accessory (shop cards + hotbar slots). id may be null.
+function drawAccIcon(canvas, ids) {
+  // face items alone get a bigger, closer cube (no hat room needed on top)
+  const faceOnly = ids.every(id => !id || ACC[id].slot === 'face') && ids.some(Boolean);
+  const g = canvas.getContext('2d'), w = canvas.width, h = canvas.height, s = w * (faceOnly ? 0.72 : 0.4);
+  g.clearRect(0, 0, w, h);
+  g.save(); g.translate(w / 2, faceOnly ? h * 0.5 + s / 2 : h * 0.94);
+  g.fillStyle = '#fff'; g.strokeStyle = INK; g.lineWidth = s * 0.06; g.lineJoin = 'round';
+  g.beginPath(); g.rect(-s / 2, -s, s, s); g.fill(); g.stroke();
+  g.fillStyle = INK;
+  for (const d of [-1, 1]) { g.beginPath(); g.ellipse(d * s * 0.17, -s * 0.63, s * 0.05, s * 0.08, 0, 0, Math.PI * 2); g.fill(); }
+  g.lineWidth = s * 0.045; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(-s * 0.28, -s * 0.4); g.quadraticCurveTo(0, -s * 0.12, s * 0.28, -s * 0.4); g.stroke();
+  for (const id of ids) if (id) drawAcc(g, id, s);
+  g.restore();
 }
 function drawFace(s) {
   const mood = moodNow(), ey = -s * 0.63, ex = s * 0.17;
@@ -1549,6 +1580,9 @@ function refreshHUD() {
   bagCount.textContent = cnt;
   bagCount.classList.toggle('hidden', cnt <= 0);
   drawRodIcon(rodIconCv, ROD[S.rod], 'slot');
+  drawAccIcon($('#headIcon'), [S.head]); drawAccIcon($('#faceIcon'), [S.face]);
+  $('#slotHead').title = S.head ? ACC[S.head].name : 'No hat'; $('#slotFace').title = S.face ? ACC[S.face].name : 'No face item';
+  $('#slotHead').classList.toggle('empty', !S.head); $('#slotFace').classList.toggle('empty', !S.face);
   slotRod.title = ROD[S.rod].name;
   if (S.bait) {
     baitEmoji.innerHTML = ItemArt.html(S.bait, BAIT[S.bait].emoji);
@@ -1748,6 +1782,7 @@ function renderShop(popId) {
   shopEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === shopTab));
   if (shopTab === 'sell') renderSell();
   else if (shopTab === 'rods') renderRods();
+  else if (shopTab === 'acc') renderAcc();
   else renderBait();
   if (popId) shopBody.querySelectorAll(`[data-id="${popId}"]`).forEach(t => t.classList.add('pop'));
 }
@@ -1831,6 +1866,25 @@ function renderBait() {
   const list = BAITS.filter(b => !b.merchant || S.baits[b.id]);
   shopBody.innerHTML = `<p class="tab-intro">Bait adds luck and faster bites to every cast until it runs out.</p><div class="cards">` + list.map(baitCard).join('') + '</div>';
 }
+let accSlot = 'head';
+function accCard(a) {
+  const owned = S.ownedAcc.includes(a.id), worn = S[a.slot] === a.id;
+  let btn;
+  if (worn) btn = `<button class="btn sketch btn-equipped" data-unequip-acc="${a.slot}">Wearing ✓ (tap to remove)</button>`;
+  else if (owned) btn = `<button class="btn sketch btn-equip" data-equip-acc="${a.id}">Wear</button>`;
+  else btn = `<button class="btn sketch ${S.money >= a.price ? 'btn-buy' : 'btn-poor'}" data-buy-acc="${a.id}">Buy · ${COIN()} ${fmt(a.price)}</button>`;
+  return `<div class="card ${worn ? 'equipped' : ''} ${a.rare ? 'exclusive' : ''}">${a.rare ? '<span class="tag">Rare</span>' : ''}
+    <canvas class="acc-ic" width="120" height="124" data-acc-icon="${a.id}"></canvas>
+    <div class="card-name">${a.name}</div><div class="card-desc">${a.desc}</div>
+    <div class="stats"><span>🍀 +${Math.round(a.luck * 100)}% luck</span></div>${btn}</div>`;
+}
+function renderAcc() {
+  const list = ACCS.filter(a => a.slot === accSlot);
+  shopBody.innerHTML = `<p class="tab-intro">Dress up your cube! Wear one hat and one face item at the same time. Each one adds a bit of luck.</p>
+    <div class="acc-tabs">${['head', 'face'].map(sl => `<button class="btn sketch ${accSlot === sl ? 'btn-equip' : ''}" data-acc-slot="${sl}">${sl === 'head' ? 'Hats' : 'Face'}</button>`).join('')}</div>
+    <div class="cards">` + list.map(accCard).join('') + '</div>';
+  shopBody.querySelectorAll('canvas[data-acc-icon]').forEach(cv => drawAccIcon(cv, [cv.dataset.accIcon]));
+}
 function cantAfford(btn) { toast('Not enough coins!'); btn.classList.remove('shake'); void btn.offsetWidth; btn.classList.add('shake'); }
 
 // Buy / equip buttons on rod and bait cards (shared by the shop and the merchant).
@@ -1852,6 +1906,15 @@ function handleGearButton(t) {
   }
   if (t.dataset.equipBait) { S.bait = t.dataset.equipBait; save(); refreshHUD(); return true; }
   if (t.hasAttribute('data-unequip-bait')) { S.bait = null; save(); refreshHUD(); return true; }
+  if (t.dataset.accSlot) { accSlot = t.dataset.accSlot; shopBody.scrollTop = 0; return true; }
+  if (t.dataset.buyAcc) {
+    const a = ACC[t.dataset.buyAcc];
+    if (S.money < a.price) { cantAfford(t); return true; }
+    S.money -= a.price; S.ownedAcc.push(a.id); S[a.slot] = a.id; save();
+    toast(`You bought the ${a.name}!`); bumpMoney(); refreshHUD(); return true;
+  }
+  if (t.dataset.equipAcc) { const a = ACC[t.dataset.equipAcc]; S[a.slot] = a.id; save(); refreshHUD(); return true; }
+  if (t.dataset.unequipAcc) { S[t.dataset.unequipAcc] = null; save(); refreshHUD(); return true; }
   return false;
 }
 
@@ -2021,7 +2084,8 @@ backpackEl.addEventListener('click', openBag);
 slotRod.addEventListener('click', openBag);
 slotBait.addEventListener('click', openBag);
 document.querySelectorAll('[data-art-slot]').forEach(s => { s.innerHTML = ItemArt.html(s.dataset.artSlot, ''); });
-document.querySelectorAll('[data-acc]').forEach(s => s.addEventListener('click', () => toast('Accessories are coming soon!')));
+// hat / face slots open the shop's accessories tab
+for (const [el, sl] of [[$('#slotHead'), 'head'], [$('#slotFace'), 'face']]) el.addEventListener('click', () => { shopTab = 'acc'; accSlot = sl; openShop(); });
 // On narrow screens, when the merchant is visiting, center between his stall and the shop
 // so both fit; otherwise center the shop.
 const shopViewCam = () => clampCam((W < 700 ? L.shopX - 110 * K : L.shopX) - W / 2);

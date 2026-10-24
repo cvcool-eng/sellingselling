@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>SellingSelling</title>
-  <link rel="icon" href="icon.svg?v=43" type="image/svg+xml">
-  <link rel="icon" href="icon-32.png?v=43" type="image/png" sizes="32x32">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=43">
-  <meta property="og:image" content="icon-512.png?v=43">
+  <link rel="icon" href="icon.svg?v=44" type="image/svg+xml">
+  <link rel="icon" href="icon-32.png?v=44" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=44">
+  <meta property="og:image" content="icon-512.png?v=44">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=43">
+  <link rel="stylesheet" href="style.css?v=44">
 </head>
 <body>
   <canvas id="world"></canvas>
@@ -34,8 +34,8 @@
   <div id="hotbar" class="sketch">
     <div class="slot" id="slotRod"><span class="slot-label">Pole</span><canvas id="rodIcon" width="112" height="112"></canvas></div>
     <div class="slot" id="slotBait"><span class="slot-label">Bait</span><span class="slot-emoji" id="baitEmoji"></span><span class="slot-count" id="baitCount"></span></div>
-    <div class="slot locked" data-acc><span class="slot-label">Accessory</span><span class="slot-emoji" data-art-slot="ring"></span><span class="lock">🔒</span></div>
-    <div class="slot locked" data-acc><span class="slot-label">Accessory</span><span class="slot-emoji" data-art-slot="tophat"></span><span class="lock">🔒</span></div>
+    <div class="slot" id="slotHead"><span class="slot-label">Hat</span><canvas id="headIcon" width="120" height="124"></canvas></div>
+    <div class="slot" id="slotFace"><span class="slot-label">Face</span><canvas id="faceIcon" width="120" height="124"></canvas></div>
     <button id="backpack" aria-label="Backpack">
       <svg class="bag-svg" viewBox="0 0 64 64">
         <path d="M22 18 C22 5, 42 5, 42 18" fill="none" stroke="#1b1b1b" stroke-width="5" stroke-linecap="round"/>
@@ -70,6 +70,7 @@
         <button class="tab sketch" data-tab="sell">Sell</button>
         <button class="tab sketch" data-tab="rods">Fishing Poles</button>
         <button class="tab sketch" data-tab="bait">Bait</button>
+        <button class="tab sketch" data-tab="acc">Accessories</button>
       </div>
     </div>
   </div>
@@ -136,9 +137,9 @@
   <!-- Title / loading screen -->
   <div id="title"><canvas id="titleCanvas"></canvas></div>
 
-  <script src="data.js?v=43"></script>
-  <script src="items-art.js?v=43"></script>
-  <script src="game.js?v=43"></script>
-  <script src="title.js?v=43"></script>
+  <script src="data.js?v=44"></script>
+  <script src="items-art.js?v=44"></script>
+  <script src="game.js?v=44"></script>
+  <script src="title.js?v=44"></script>
 </body>
 </html>

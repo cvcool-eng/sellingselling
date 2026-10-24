@@ -412,3 +412,9 @@ img.art.coin-ic, .coin-slot img.art { display: inline-block; width: 1.05em; heig
   .nav-btn { top: auto; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 3px 10px; }
   #toast { bottom: 78px; }
 }
+
+/* ---------- accessories ---------- */
+.acc-tabs { display: flex; gap: 10px; justify-content: center; margin: 0 0 12px; }
+.acc-tabs .btn { min-width: 110px; font-size: 18px; }
+.card canvas.acc-ic, .modal .card canvas.acc-ic { width: 84px; height: 87px; }
+.slot.empty canvas { opacity: .35; }
