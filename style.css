@@ -38,6 +38,10 @@ button.sketch:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 var
 .pill { padding: 2px 14px; font-size: 26px; white-space: nowrap; }
 .pill.small { font-size: 18px; padding: 1px 12px; box-shadow: 2px 3px 0 var(--ink); }
 #money.bump { animation: bump .4s ease; }
+#autoFish { pointer-events: auto; cursor: pointer; font-family: inherit; color: var(--ink); }
+#autoFish b { color: #b0413e; }
+#autoFish.on { background: #d9f5c9; }
+#autoFish.on b { color: #2f7d32; }
 
 .nav-btn {
   position: fixed; left: 12px; top: 46%; z-index: 10;

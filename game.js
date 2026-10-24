@@ -417,6 +417,7 @@ function update(dt) {
     F.fly.t += dt;
     if (F.fly.t >= 0.8 && F.state !== 'reveal') { F.fly = null; showReveal(F.item); go('reveal'); }
   }
+  autoFishTick(dt);
   if (C.poke > 0) { C.poke -= dt; tsx += Math.sin(C.poke * 40) * 0.05; tsy -= Math.sin(C.poke * 40) * 0.05; }
 
   // The bobber hanging off the tip eases toward its spot under the tip (a short,
@@ -1666,6 +1667,21 @@ function closeReveal() {
   };
 }
 revealEl.addEventListener('click', closeReveal);
+
+// ---------- Auto fish: casts again on its own and clears each catch popup ----------
+const autoBtn = $('#autoFish'), autoVal = $('#autoFishVal');
+function refreshAutoFish() { autoBtn.classList.toggle('on', !!S.autoFish); autoVal.textContent = S.autoFish ? 'On' : 'Off'; }
+autoBtn.addEventListener('click', () => { S.autoFish = !S.autoFish; save(); refreshAutoFish(); });
+refreshAutoFish();
+let autoIdle = 0;
+function autoFishTick(dt) {
+  if (!S.autoFish) return;
+  // rare catches stay up a little longer so you can see them
+  if (revealOpen) { if (performance.now() - revealAt > (F.item.rarity >= 4 ? 2600 : 1300)) closeReveal(); return; }
+  if (F.state !== 'idle' || modalOpen || insideCabin || sleeping || document.getElementById('title')) { autoIdle = 0; return; }
+  autoIdle += dt;
+  if (autoIdle > 0.4) { autoIdle = 0; startFishing(); }
+}
 
 // ---------- Item tiles ----------
 function sortedIds(counts) {
