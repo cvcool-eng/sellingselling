@@ -128,7 +128,7 @@ function merchantStock(day) {
   };
 }
 const mmss = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-window.SellingSelling = { setClockOffset: s => { clockOffset = s; }, sleep: () => goToSleep(), merchantHere: () => merchant.here, tick: () => updateClock(0), merge: () => openMerge() }; // test hooks
+window.SellingSelling = { setClockOffset: s => { clockOffset = s; }, sleep: () => goToSleep(), merchantHere: () => merchant.here, tick: () => updateClock(0), merge: () => openMerge(), accIcon: (cv, ids) => drawAccIcon(cv, ids) }; // test hooks
 
 // ============================================================
 //  Canvas + hand-drawn line helpers
@@ -1357,7 +1357,10 @@ function drawAccIcon(canvas, ids) {
   g.fillStyle = INK;
   for (const d of [-1, 1]) { g.beginPath(); g.ellipse(d * s * 0.17, -s * 0.63, s * 0.05, s * 0.08, 0, 0, Math.PI * 2); g.fill(); }
   g.lineWidth = s * 0.045; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(-s * 0.28, -s * 0.4); g.quadraticCurveTo(0, -s * 0.12, s * 0.28, -s * 0.4); g.stroke();
+  // same smile curve as the real cube (drawFace), so accessories line up the same way
+  g.beginPath();
+  for (let i = 0; i <= 12; i++) { const t = i / 12; g.lineTo(lerp(-s * 0.3, s * 0.32, t), -s * 0.4 + Math.sin(t * Math.PI) * s * 0.15 + t * s * 0.02); }
+  g.stroke();
   for (const id of ids) if (id) drawAcc(g, id, s);
   g.restore();
 }

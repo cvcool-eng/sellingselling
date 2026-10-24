@@ -1405,26 +1405,30 @@ const ART = {
     sparkle(76, 30, 5, '#ffe14d'); sparkle(28, 40, 4, '#b98aff');
   },
   h_halo() {
-    const g = c.createRadialGradient(50, 56, 4, 50, 56, 40); g.addColorStop(0, 'rgba(255,240,150,.6)'); g.addColorStop(1, 'rgba(255,240,150,0)');
-    c.fillStyle = g; c.fillRect(0, 16, 100, 80);
-    ell(50, 56, 30, 8, null, 7); ell(50, 56, 30, 8, null, 4.5);
-    line(arcP(50, 56, 30, 8, 0, Math.PI * 2, 24), 3.6, '#ffd84d');
+    // hovers just above the head, glowing down onto it
+    const g = c.createRadialGradient(50, 70, 4, 50, 70, 40); g.addColorStop(0, 'rgba(255,240,150,.6)'); g.addColorStop(1, 'rgba(255,240,150,0)');
+    c.fillStyle = g; c.fillRect(0, 30, 100, 70);
+    ell(50, 70, 30, 7, null, 7); ell(50, 70, 30, 7, null, 4.5);
+    line(arcP(50, 70, 30, 7, 0, Math.PI * 2, 24), 3.6, '#ffd84d');
   },
   h_cloud() {
-    for (const [x, y] of [[30, 76], [44, 82], [60, 80], [72, 74]]) drop(x, y, 0.7);
-    for (const [x, y, r] of [[32, 54, 14], [50, 44, 18], [68, 52, 15]]) ell(x, y, r, r, '#b8c2cc', 3);
-    poly([[20, 58], [82, 58], [80, 66], [22, 66]], '#b8c2cc', 0);
-    line([[20, 66], [80, 66]], 3);
-    dot(44, 54, 2.4); dot(58, 54, 2.4); line(qP([46, 61], [51, 58], [56, 61], 4), 2);
+    // sits right on the head, raining down its sides
+    for (const [x, y] of [[16, 90], [20, 102], [84, 92], [80, 104]]) drop(x, y, 0.7);
+    for (const [x, y, r] of [[32, 66, 14], [50, 56, 18], [68, 64, 15]]) ell(x, y, r, r, '#b8c2cc', 3);
+    poly([[18, 70], [84, 70], [82, 82], [20, 82]], '#b8c2cc', 0);
+    line([[18, 82], [82, 82]], 3);
+    dot(44, 66, 2.4); dot(58, 66, 2.4); line(qP([46, 73], [51, 70], [56, 73], 4), 2);
   },
   h_lightbulb() {
-    const g = c.createRadialGradient(50, 40, 4, 50, 40, 40); g.addColorStop(0, 'rgba(255,240,120,.8)'); g.addColorStop(1, 'rgba(255,240,120,0)');
-    c.fillStyle = g; c.fillRect(0, 0, 100, 90);
-    for (let i = 0; i < 7; i++) { const a = Math.PI + 0.3 + i * 0.42; line([[50 + Math.cos(a) * 28, 40 + Math.sin(a) * 28], [50 + Math.cos(a) * 38, 40 + Math.sin(a) * 38]], 2.4, '#ffb000'); }
-    ell(50, 40, 18, 18, '#fff27a');
-    poly([[42, 54], [58, 54], [58, 70], [42, 70]], '#aab1bb');
-    for (const y of [58, 63]) line([[42, y], [58, y]], 1.6);
-    line(qP([46, 46], [50, 34], [54, 46], 5), 1.6, '#e8a000');
+    // a bulb screwed onto a little headband
+    const g = c.createRadialGradient(50, 36, 4, 50, 36, 40); g.addColorStop(0, 'rgba(255,240,120,.8)'); g.addColorStop(1, 'rgba(255,240,120,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 100, 80);
+    for (let i = 0; i < 7; i++) { const a = Math.PI + 0.3 + i * 0.42; line([[50 + Math.cos(a) * 26, 36 + Math.sin(a) * 26], [50 + Math.cos(a) * 36, 36 + Math.sin(a) * 36]], 2.4, '#ffb000'); }
+    poly([[42, 50], [58, 50], [58, 72], [42, 72]], '#aab1bb');
+    for (const y of [56, 62, 68]) line([[42, y], [58, y]], 1.6);
+    ell(50, 36, 18, 18, '#fff27a');
+    line(qP([46, 42], [50, 30], [54, 42], 5), 1.6, '#e8a000');
+    poly([[18, 72], [82, 72], [82, 84], [18, 84]], '#4aa3df');
   },
   h_wizard() {
     const hat = poly([[24, 80], [52, 6], [76, 80]], '#2f4fa8');
@@ -1433,11 +1437,12 @@ const ART = {
     ell(50, 80, 40, 8, '#2a4598');
   },
   h_ufo() {
-    c.fillStyle = 'rgba(160,255,160,.35)'; c.beginPath(); c.moveTo(40, 52); c.lineTo(60, 52); c.lineTo(74, 84); c.lineTo(26, 84); c.closePath(); c.fill();
-    ell(50, 40, 14, 12, 'rgba(180,240,255,.85)');
-    ell(50, 48, 34, 9, '#aab1bb');
-    for (const x of [30, 42, 58, 70]) dot(x, 49, 2.4, '#ffe14d');
-    eye(46, 38, 2); eye(54, 38, 2);
+    // landed on the head, legs down
+    for (const d of [-1, 1]) line([[50 + d * 18, 72], [50 + d * 24, 82]], 2.6);
+    ell(50, 58, 15, 13, 'rgba(180,240,255,.85)');
+    ell(50, 68, 36, 9, '#aab1bb');
+    for (const x of [28, 41, 59, 72]) dot(x, 69, 2.4, '#ffe14d');
+    eye(45, 56, 2.2); eye(55, 56, 2.2);
   },
   h_tiara() {
     poly([[22, 82], [26, 66], [36, 72], [44, 54], [50, 64], [56, 54], [64, 72], [74, 66], [78, 82]], '#e6ecf2');
@@ -1487,10 +1492,11 @@ const ART = {
     for (const d of [-1, 1]) for (const dy of [-3, 1, 5]) line([[50 + d * 10, 52 + dy * 0.5], [50 + d * 34, 50 + dy * 1.6]], 1.6);
   },
   f_lollipop() {
-    line([[54, 60], [76, 74]], 3, '#fff'); line([[54, 60], [76, 74]], 1.4, 'rgba(27,27,27,.4)');
-    ell(80, 76, 9, 9, '#ff7ab8', 2.4); line(arcP(80, 76, 5, 5, 0, 5.5, 10), 2, '#fff'); line(arcP(80, 76, 2, 2, 0, 5, 6), 1.6, '#fff');
+    const y = mouthY(56);
+    line([[56, y], [76, y + 12]], 3, '#fff'); line([[56, y], [76, y + 12]], 1.4, 'rgba(27,27,27,.4)');
+    ell(80, y + 14, 9, 9, '#ff7ab8', 2.4); line(arcP(80, y + 14, 5, 5, 0, 5.5, 10), 2, '#fff'); line(arcP(80, y + 14, 2, 2, 0, 5, 6), 1.6, '#fff');
   },
-  f_bubblegum() { ell(54, 64, 14, 13, 'rgba(255,150,200,.85)', 2.4); shine(arcP(54, 64, 9, 8, 3.6, 4.4, 4), 2.4); },
+  f_bubblegum() { const y = mouthY(52) + 4; ell(52, y, 14, 13, 'rgba(255,150,200,.85)', 2.4); shine(arcP(52, y, 9, 8, 3.6, 4.4, 4), 2.4); },
   f_monocle() {
     ell(64, 40, 11, 11, 'rgba(220,240,255,.3)', 3, 0); line(arcP(64, 40, 11, 11, 0, Math.PI * 2, 20), 2, '#ffcf3f');
     line(qP([74, 44], [84, 62], [76, 84], 8), 1.6, '#ffcf3f');
@@ -1527,20 +1533,21 @@ const ART = {
     strokeP(b, 2.8);
     stache('#8a5a3a', 1);
   },
-  f_fangs() { for (const x of [40, 58]) poly([[x, 59], [x + 4, 59], [x + 2, 70]], '#fff', 1.6); },
-  f_bucktooth() { poly([[44, 60], [56, 60], [56, 70], [44, 70]], '#fff', 2); line([[50, 60], [50, 70]], 1.4); },
-  f_tongue() { const t = poly([[44, 62], [56, 62], [57, 74], [50, 80], [43, 74]], '#ff7a8a', 2.2); line([[50, 64], [50, 74]], 1.4, 'rgba(160,30,50,.5)'); },
-  f_pacifier() { ell(50, 62, 14, 8, '#7fd8f7', 2.4); ell(50, 72, 7, 7, null, 3); line(arcP(50, 72, 7, 7, 0, Math.PI * 2, 14), 2, '#ff7ab8'); dot(50, 62, 2.4, '#fff'); },
+  f_fangs() { for (const x of [40, 57]) { const y = mouthY(x + 2) - 1; poly([[x, y], [x + 4, y], [x + 2, y + 11]], '#fff', 1.6); } },
+  f_bucktooth() { const y = mouthY(50) - 1; poly([[44, y], [56, y], [56, y + 10], [44, y + 10]], '#fff', 2); line([[50, y], [50, y + 10]], 1.4); },
+  f_tongue() { const y = mouthY(50) - 1; poly([[44, y], [56, y], [57, y + 12], [50, y + 18], [43, y + 12]], '#ff7a8a', 2.2); line([[50, y + 2], [50, y + 12]], 1.4, 'rgba(160,30,50,.5)'); },
+  f_pacifier() { const y = mouthY(50); ell(50, y, 14, 7, '#7fd8f7', 2.4); ell(50, y + 10, 7, 7, null, 3); line(arcP(50, y + 10, 7, 7, 0, Math.PI * 2, 14), 2, '#ff7ab8'); dot(50, y, 2.4, '#fff'); },
   f_pipe() {
-    line([[54, 60], [72, 66]], 4, '#5a3a20');
-    poly([[70, 58], [82, 58], [82, 72], [70, 72]], '#7a4a24', 2.4);
-    for (const [x, y, r] of [[82, 46, 4], [88, 36, 5.5], [80, 24, 4]]) ell(x, y, r, r, 'rgba(200,235,255,.55)', 1.6);
+    const y = mouthY(58);
+    line([[56, y], [72, y + 4]], 4, '#5a3a20');
+    poly([[70, y - 6], [82, y - 6], [82, y + 10], [70, y + 10]], '#7a4a24', 2.4);
+    for (const [x, dy, r] of [[82, -18, 4], [88, -28, 5.5], [80, -40, 4]]) ell(x, y + dy, r, r, 'rgba(200,235,255,.55)', 1.6);
   },
   f_snorkel() {
     poly([[18, 28], [82, 28], [84, 50], [16, 50]], 'rgba(160,220,255,.4)', 3);
     line([[16, 40], [8, 38]], 3); line([[84, 40], [92, 38]], 3);
     ribbon([[86, 60], [90, 30], [90, 8]], 6, 6, '#ffb000', 2.4);
-    line(qP([86, 60], [74, 66], [58, 60], 6), 5, '#ffb000');
+    line(qP([86, 60], [76, 70], [60, mouthY(60)], 6), 5, '#ffb000');
   },
   f_swimgoggles() {
     line([[10, 38], [90, 38]], 3, '#3f7fe0');
@@ -1579,9 +1586,10 @@ const ART = {
     line([[50, 26], [50, 58]], 3);
   },
   f_partyblower() {
-    const t = poly([[54, 58], [78, 54], [80, 64], [56, 64]], '#ffd84d', 2.2);
-    line([[60, 56], [60, 64]], 2, '#e8574a'); line([[68, 55], [68, 63]], 2, '#3f7fe0');
-    ribbon(arcP(88, 64, 8, 8, -1.6, 3.4, 12), 8, 6, '#ff5aa0', 2);
+    const y = mouthY(56);
+    poly([[54, y - 3], [78, y - 7], [80, y + 3], [56, y + 3]], '#ffd84d', 2.2);
+    line([[60, y - 5], [60, y + 3]], 2, '#e8574a'); line([[68, y - 6], [68, y + 2]], 2, '#3f7fe0');
+    ribbon(arcP(88, y + 3, 8, 8, -1.6, 3.4, 12), 8, 6, '#ff5aa0', 2);
   },
   f_masquerade() {
     ribbon(qP([86, 30], [96, 10], [92, 0], 8), 8, 2, '#3fd4c0', 2);
@@ -1608,9 +1616,12 @@ const ART = {
   },
   f_sparkleeyes() { for (const x of [36, 64]) { sparkle(x, 40, 11, '#ffe14d'); sparkle(x + 10, 30, 4, '#fff'); } },
   f_goldgrill() {
-    poly([[34, 58], [66, 58], [64, 66], [36, 66]], '#ffcf3f', 2.2);
-    for (const x of [42, 50, 58]) line([[x, 58], [x, 66]], 1.4, 'rgba(120,80,0,.6)');
-    sparkle(68, 56, 4);
+    // a row of gold teeth hugging the smile
+    const top = [], bot = [];
+    for (let x = 34; x <= 66; x += 4) { top.push([x, mouthY(x) - 1]); bot.unshift([x, mouthY(x) + 7]); }
+    poly(top.concat(bot), '#ffcf3f', 2.2);
+    for (const x of [42, 50, 58]) line([[x, mouthY(x) - 1], [x, mouthY(x) + 7]], 1.4, 'rgba(120,80,0,.6)');
+    sparkle(70, mouthY(66) - 6, 4);
   },
   f_diamondmonocle() {
     ell(64, 40, 12, 12, 'rgba(180,240,255,.4)', 3); line(arcP(64, 40, 12, 12, 0, Math.PI * 2, 20), 2.2, '#bdf3ff');
@@ -1879,6 +1890,8 @@ function glasses(lens, frame) {
   line(qP([46, 39], [50, 35], [54, 39], 4), 2.4, frame);
   lens(36); lens(64);
 }
+// height of the cube's smile at x (it runs from (26,58) down to about (50,71) and back up)
+function mouthY(x) { const t = (x - 26) / 49.6; return 58 + 12 * Math.sin(Math.PI * t) + 1.6 * t; }
 // curly mustache under the nose
 function stache(col, s) {
   for (const d of [-1, 1]) poly([[50, 50], [50 + d * 8 * s, 48], [50 + d * 20 * s, 50], [50 + d * 26 * s, 46], [50 + d * 22 * s, 56], [50 + d * 10 * s, 58], [50, 55]], col, 2.4);
