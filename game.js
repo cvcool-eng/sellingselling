@@ -1682,6 +1682,47 @@ function autoFishTick(dt) {
   autoIdle += dt;
   if (autoIdle > 0.4) { autoIdle = 0; startFishing(); }
 }
+// Browsers stop the game when the tab is closed, hidden, or the screen is off, so
+// auto fish keeps going "in the background" by counting the time you were away
+// and catching the fish you would have caught (same luck, speed and bait use).
+const AWAY_MAX_S = 24 * 3600, awayEl = $('#away'), awayBody = $('#awayBody');
+function awaySeconds() { return S.lastSeen ? Math.min(AWAY_MAX_S, (Date.now() - S.lastSeen) / 1000) : 0; }
+function catchUpAway() {
+  const secs = awaySeconds();
+  S.lastSeen = Date.now();
+  if (!S.autoFish || secs < 15) { save(); return; }
+  const got = {};
+  let n = 0, worth = 0, ranOut = null;
+  for (let t = 0; ; n++) {
+    // one full cast: ~5.5s of animation + the wait for a bite
+    const bs = S.bait ? (BAIT[S.bait].speed || 1) : 1;
+    t += 5.5 + 2.3 * ROD[S.rod].speed * bs;
+    if (t > secs) break;
+    const item = rollItem();
+    if (S.bait) {
+      S.baits[S.bait] = (S.baits[S.bait] || 0) - 1;
+      if (S.baits[S.bait] <= 0) { delete S.baits[S.bait]; ranOut = BAIT[S.bait].name; S.bait = null; }
+    }
+    got[item.id] = (got[item.id] || 0) + 1;
+    S.inventory[item.id] = (S.inventory[item.id] || 0) + 1;
+    S.discovered[item.id] = true;
+    worth += item.price;
+  }
+  S.caught += n;
+  save(); refreshHUD();
+  if (!n) return;
+  const ids = Object.keys(got).sort((a, b) => ITEM[b].rarity - ITEM[a].rarity || ITEM[b].price - ITEM[a].price);
+  const h = Math.floor(secs / 3600), m = Math.floor(secs % 3600 / 60);
+  awayBody.innerHTML = `<p class="prop-text">Auto fish kept going for ${h ? h + 'h ' : ''}${m}m and caught <b>${fmt(n)}</b> fish, worth ${COIN()} ${fmt(worth)}!${ranOut ? ` You ran out of ${ranOut}.` : ''}${secs >= AWAY_MAX_S ? ' (Auto fish counts up to 24 hours away.)' : ''}</p>
+    <div class="grid">${ids.map(id => tileHTML(id, got[id])).join('')}</div>`;
+  if (modalOpen) closeModal(modalOpen);
+  openModal(awayEl);
+}
+setInterval(() => { if (!document.hidden && S.lastSeen) { S.lastSeen = Date.now(); save(); } }, 3000);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { S.lastSeen = Date.now(); save(); } else catchUpAway();
+});
+window.addEventListener('pagehide', () => { if (!document.hidden) { S.lastSeen = Date.now(); save(); } });
 
 // ---------- Item tiles ----------
 function sortedIds(counts) {
@@ -2065,6 +2106,7 @@ window.addEventListener('resize', resize);
 resize();
 setMoneyText(S.money);
 refreshHUD();
+catchUpAway(); // auto fish catches from while the game was closed
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
