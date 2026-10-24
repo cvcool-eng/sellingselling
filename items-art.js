@@ -917,6 +917,264 @@ const ART = {
   },
   megalodon() { sharkArt({ body: '#5a6672', belly: '#dfe6ec', bigMouth: true }); },
 
+  // ---------- even more sea creatures ----------
+  tadpole() {
+    ribbon(wave(54, 56, 6, 48, 5, 1.5, 14), 14, 2, '#5a6b3a');
+    const b = ell(64, 54, 22, 17, '#5a6b3a');
+    clip(b, () => ell(66, 64, 20, 9, '#8a9a6a', 0));
+    strokeP(b, 3.2);
+    eye(70, 48, 3); eye(80, 50, 3); smile(76, 58, 4, 2.5);
+    shine(arcP(64, 54, 16, 12, 3.6, 4.4, 5));
+  },
+  barnacle() {
+    ell(50, 80, 42, 12, '#9a958c');
+    for (const [x, y, s] of [[30, 66, 0.9], [70, 64, 1], [50, 52, 1.2]]) {
+      poly([[x - 16 * s, y + 14 * s], [x - 8 * s, y - 12 * s], [x + 8 * s, y - 12 * s], [x + 16 * s, y + 14 * s]], '#e2dbcb');
+      for (const dx of [-8, 0, 8]) line([[x + dx * s * 1.4, y + 13 * s], [x + dx * s * 0.8, y - 10 * s]], 1.4, 'rgba(120,110,90,.5)');
+      ell(x, y - 12 * s, 8 * s, 3 * s, '#4a4038', 2);
+    }
+    for (let i = 0; i < 4; i++) line(qP([50, 38], [44 + i * 4, 24], [38 + i * 8, 22], 5), 1.6);
+  },
+  mussel() {
+    const s = ell(50, 52, 40, 20, '#2b3550', 3.2, -0.45);
+    clip(s, () => { for (let i = 1; i < 5; i++) line(arcP(30, 64, 12 + i * 9, 8 + i * 5, -1.5, 0.2, 8), 1.8, 'rgba(110,130,180,.6)'); });
+    strokeP(s, 3.2);
+    shine(arcP(50, 52, 32, 14, 3.4, 4.2, 5).map(([x, y]) => [x, y - 4]));
+    eye(58, 46, 2.6); eye(68, 42, 2.6); smile(65, 52, 4, 2);
+  },
+  goldfish() {
+    poly([[34, 52], [6, 30], [14, 50]], '#ff8a1a', 2.6); poly([[34, 52], [6, 76], [14, 54]], '#ffb04a', 2.6);
+    fish({ cx: 58, cy: 52, len: 64, h: 40, body: '#ff9a2e', belly: '#ffd08a', fin: '#ffb85c', tail: '#ff8a1a' });
+  },
+  anemone() {
+    const cols = ['#ff7ab8', '#ff9ad0', '#ff5aa0'];
+    for (let i = 0; i < 9; i++) { const x = 24 + i * 6.5; ribbon(wave(x, 56, x + (i - 4) * 4, 14 + (i % 2) * 8, 3, 1.2, 10), 6, 3, cols[i % 3], 2.2); }
+    poly([[24, 58], [76, 58], [70, 90], [30, 90]], '#c9a0ff');
+    ell(50, 58, 26, 6, '#e0c4ff', 2.4);
+    eye(42, 72, 2.6); eye(58, 72, 2.6); smile(50, 79, 4, 2.5);
+  },
+  seasponge() {
+    const b = poly([[22, 22], [40, 14], [56, 22], [76, 16], [82, 40], [76, 60], [84, 82], [60, 90], [40, 84], [18, 88], [22, 60], [14, 40]], '#f2d24a');
+    clip(b, () => { for (const [x, y, r] of [[30, 30, 4], [64, 28, 5], [72, 70, 4], [28, 74, 5], [48, 82, 3], [76, 48, 3]]) ell(x, y, r, r * 0.8, '#c9a82a', 1.6); });
+    strokeP(b, 3.2);
+    eye(42, 48, 3.2); eye(58, 48, 3.2); smile(50, 58, 6); blush(36, 56); blush(64, 56);
+  },
+  betta() {
+    const t = poly([[40, 50], [8, 14], [2, 50], [8, 88]], '#9b2040');
+    clip(t, () => { for (let i = 0; i < 5; i++) line([[40, 50], [2, 18 + i * 16]], 1.6, 'rgba(255,150,180,.6)'); });
+    strokeP(t, 3);
+    poly([[44, 34], [56, 6], [74, 34]], '#e8506a', 2.6); poly([[44, 66], [50, 96], [70, 66]], '#e8506a', 2.6);
+    fish({ cx: 60, cy: 50, len: 58, h: 30, body: '#c0304a', fin: '#e8506a', tail: '#9b2040' });
+  },
+  damselfish() {
+    fish({ cx: 52, cy: 52, len: 74, h: 44, body: '#1f5fd0', fin: '#2f7fe0', tail: '#ffd84d', spots: 'rgba(140,220,255,.9)', tallFin: true });
+  },
+  triggerfish() {
+    fish({ cx: 52, cy: 54, len: 78, h: 46, body: '#f0e6d0', belly: '#ffffff', fin: '#c9b890', lateral: '#2f6fe0', backWaves: '#ffb000' });
+    line([[62, 44], [80, 40]], 3, '#2f6fe0'); line([[62, 50], [82, 50]], 3, '#ffb000');
+  },
+  nudibranch() {
+    ribbon(qP([12, 74], [50, 82], [86, 70], 10), 16, 12, '#9b6cff');
+    for (let x = 20; x < 80; x += 8) { line([[x, 70], [x + 2, 60]], 4, '#ff9a2e'); dot(x + 2, 59, 3, '#ffd84d'); }
+    for (const a of [-0.6, -0.2, 0.2]) line([[26, 64], [26 + Math.cos(a - 1.6) * 16, 64 + Math.sin(a - 1.6) * 16]], 2.4, '#ff9a2e');
+    line([[78, 66], [82, 50]], 3, '#ff9a2e'); line([[84, 66], [90, 52]], 3, '#ff9a2e');
+    eye(80, 72, 2.4); eye(86, 70, 2.4);
+  },
+  mantisshrimp() {
+    const cols = ['#3fae4a', '#4aa3df', '#e8574a', '#ffb000', '#3fae4a', '#9b4de0'];
+    for (let i = 5; i >= 0; i--) ell(20 + i * 11, 58 - i * 2, 9, 12, cols[i], 2.6);
+    poly([[12, 58], [2, 46], [4, 70]], '#e8574a', 2.4);
+    for (const d of [0, 1]) { line([[78 + d * 4, 52], [90 + d * 2, 70]], 3.4, '#ff7ab8'); ell(92 + d * 2, 72, 4, 4, '#ff7ab8', 2); }
+    line([[82, 44], [86, 30]], 2.2); line([[86, 46], [94, 34]], 2.2);
+    ell(86, 30, 4, 3, '#3fd4c0', 2); dot(86, 30, 1.6); ell(94, 34, 4, 3, '#3fd4c0', 2); dot(94, 34, 1.6);
+  },
+  horseshoecrab() {
+    line(qP([20, 58], [8, 66], [2, 82], 6), 3.4);
+    const b = poly(arcP(56, 62, 38, 40, Math.PI, Math.PI * 2, 18), '#8a6a3a');
+    clip(b, () => { ell(56, 58, 20, 22, '#a8844c', 0); line([[56, 22], [56, 62]], 2, 'rgba(60,40,20,.5)'); });
+    strokeP(b, 3.2);
+    poly([[20, 62], [92, 62], [86, 70], [26, 70]], '#6a4f2a', 2.6);
+    dot(44, 40, 2.6); dot(68, 40, 2.6);
+  },
+  discus() {
+    fish({ cx: 52, cy: 52, len: 66, h: 62, body: '#e8574a', fin: '#c9403a', squiggle: '#4ac0e0' });
+  },
+  seaotter() {
+    line(wave(4, 74, 96, 74, 2.5, 3), 2.6, '#4aa3df');
+    const br = '#8a5a3a';
+    ell(46, 64, 32, 13, br);
+    ell(18, 70, 9, 5, br, 2.6, 0.5);
+    const h = ell(76, 50, 17, 16, br);
+    clip(h, () => ell(78, 56, 13, 10, '#d9b48a', 0));
+    strokeP(h, 3.2);
+    ell(64, 38, 5, 5, br, 2.4); ell(88, 38, 5, 5, br, 2.4);
+    eye(72, 48, 2.6); eye(84, 48, 2.6); dot(78, 55, 2.4); smile(78, 59, 3, 2);
+    ell(52, 52, 9, 6, '#f5e6c8', 2.4); line([[47, 52], [57, 52]], 1.4, 'rgba(120,90,60,.6)');
+    ell(44, 54, 4, 4, br, 2.2); ell(60, 54, 4, 4, br, 2.2);
+  },
+  penguin() {
+    ell(38, 90, 8, 4, '#ff9a2e', 2.4); ell(62, 90, 8, 4, '#ff9a2e', 2.4);
+    ell(24, 58, 7, 18, '#22262b', 2.6, 0.4); ell(76, 58, 7, 18, '#22262b', 2.6, -0.4);
+    const b = ell(50, 56, 26, 34, '#22262b');
+    clip(b, () => ell(50, 64, 18, 28, '#ffffff', 0));
+    strokeP(b, 3.2);
+    ell(42, 36, 5, 5, '#fff', 0); ell(58, 36, 5, 5, '#fff', 0);
+    eye(42, 36, 2.6); eye(58, 36, 2.6);
+    poly([[44, 44], [56, 44], [50, 52]], '#ff9a2e', 2.2); blush(36, 46); blush(64, 46);
+  },
+  coconutcrab() {
+    const col = '#5a4fa0';
+    for (const d of [-1, 1]) {
+      for (const i of [0, 1, 2]) line(qP([50 + d * 18, 64 + i * 5], [50 + d * 34, 60 + i * 7], [50 + d * 40, 78 + i * 5], 6), 3.2, col);
+      line([[50 + d * 16, 54], [50 + d * 28, 38]], 3.4, col);
+      ell(50 + d * 32, 28, 15, 12, col, 3, d * 0.4);
+      poly([[50 + d * 36, 22], [50 + d * 48, 20], [50 + d * 40, 30]], '#ffb000', 2.2);
+      line([[50 + d * 7, 50], [50 + d * 9, 36]], 2.6);
+      ell(50 + d * 9, 32, 5, 5, '#fff', 2.4); dot(50 + d * 9, 32, 2.2);
+    }
+    const b = ell(50, 62, 26, 18, col);
+    clip(b, () => ell(50, 70, 22, 8, '#8a7fd0', 0));
+    strokeP(b, 3.2);
+    smile(50, 62, 6);
+  },
+  lamprey() {
+    eelArt('#7a6a5a', 'rgba(60,45,35,.5)');
+    ell(88, 34, 8, 8, '#e8a5b0', 2.6); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; dot(88 + Math.cos(a) * 5, 34 + Math.sin(a) * 5, 1.2, '#fff'); }
+  },
+  hatchetfish() {
+    poly([[22, 46], [8, 34], [12, 48], [8, 60]], '#aeb8c4', 2.6);
+    const b = poly([[20, 44], [52, 30], [80, 36], [86, 46], [66, 56], [50, 86], [30, 66]], '#cfd8e0');
+    clip(b, () => { for (let x = 36; x < 70; x += 6) dot(x, 52 + (x - 36) * 0.6, 2, 'rgba(160,250,255,.9)'); });
+    strokeP(b, 3.2);
+    shine(qP([30, 46], [44, 38], [60, 36], 5));
+    ell(72, 40, 6, 6, '#fff', 2.2); eye(72, 40, 3.4);
+  },
+  lumpsucker() {
+    poly([[24, 58], [12, 50], [14, 66]], '#7fbf5a', 2.4);
+    const b = ell(52, 56, 30, 27, '#8fcf6a');
+    clip(b, () => { for (const [x, y] of [[38, 40], [56, 36], [68, 46], [34, 60], [62, 70], [46, 74]]) ell(x, y, 3.5, 3, '#a8e08a', 1.6); });
+    strokeP(b, 3.2);
+    poly([[46, 30], [52, 22], [58, 30]], '#7fbf5a', 2.2);
+    ell(62, 50, 6, 6, '#fff', 2.2); eye(63, 50, 3.4); smile(72, 62, 4, 2.5); blush(60, 62);
+  },
+  seapig() {
+    for (const x of [30, 42, 54, 66]) ribbon([[x, 68], [x - 2, 82]], 5, 3, '#f2b3c8', 2.2);
+    const b = ell(50, 58, 34, 16, 'rgba(250,190,210,.95)');
+    clip(b, () => ell(46, 52, 22, 6, 'rgba(255,255,255,.45)', 0));
+    strokeP(b, 3.2);
+    for (const [x, a] of [[34, -2], [46, -1.6], [58, -1.2]]) ribbon([[x, 44], [x + Math.cos(a) * 14, 44 + Math.sin(a) * 14]], 4, 2, '#f2b3c8', 2);
+    eye(72, 54, 2.6); eye(80, 55, 2.6); smile(77, 61, 3, 2); blush(70, 60);
+  },
+  harborseal() { sealArt({ body: '#9aa3ad', belly: '#c9d0d8', spots: 'rgba(60,70,80,.5)' }); },
+  manatee() {
+    poly([[22, 56], [2, 42], [2, 72]], '#8f8a86', 2.6);
+    const b = ell(50, 56, 34, 22, '#9f9a96');
+    clip(b, () => ell(50, 70, 30, 10, '#b8b3ae', 0));
+    strokeP(b, 3.2);
+    ell(50, 76, 8, 5, '#8f8a86', 2.4, 0.4);
+    ell(84, 58, 11, 10, '#b8b3ae');
+    for (const [x, y] of [[82, 60], [86, 62], [88, 58]]) dot(x, y, 1, INK);
+    eye(76, 48, 2.6); blush(78, 56);
+  },
+  gar() {
+    fish({ cx: 44, cy: 54, len: 84, h: 22, body: '#8a9a5a', belly: '#d8dcb8', fin: '#6a7a3a', spots: 'rgba(40,40,20,.5)', bill: '#6a7a3a', teeth: true });
+  },
+  viperfish() {
+    fish({ cx: 48, cy: 52, len: 80, h: 30, body: '#2a3a4a', belly: '#3a4f62', fin: '#1a2a3a', noEye: true });
+    for (const [x, dir] of [[78, 1], [84, 1], [80, -1]]) poly([[x - 1.5, 54], [x + 1.5, 54], [x + 3, 54 + dir * 18]], '#fff', 1.4);
+    ell(70, 46, 5, 5, '#bdf3ff', 2); dot(70, 46, 2.4);
+    for (let x = 24; x < 68; x += 7) dot(x, 60, 1.6, '#9ff7ff');
+  },
+  barreleye() {
+    fish({ cx: 50, cy: 58, len: 80, h: 30, body: '#3a4a5a', belly: '#5a6a7a', fin: '#2a3a4a', noEye: true });
+    ell(62, 42, 18, 14, 'rgba(200,245,255,.45)', 2.4);
+    for (const x of [58, 66]) { ell(x, 42, 3.5, 6, '#3fd46a', 1.8); dot(x, 38, 1.8); }
+    shine(arcP(62, 42, 14, 10, 3.6, 4.6, 5), 2.4);
+  },
+  gulpereel() {
+    ribbon(wave(40, 54, 2, 86, 6, 1.5, 18), 12, 2, '#1f1f2a');
+    const g = c.createRadialGradient(4, 86, 0, 4, 86, 8); g.addColorStop(0, 'rgba(255,120,200,.9)'); g.addColorStop(1, 'rgba(255,120,200,0)');
+    c.fillStyle = g; c.fillRect(-4, 78, 16, 16);
+    poly([[36, 52], [96, 20], [86, 52]], '#2a2a38');
+    poly([[36, 56], [96, 88], [86, 56]], '#3a2a3a');
+    poly([[86, 52], [96, 20], [96, 88], [86, 56]], '#5a2a40', 2.4);
+    eye(44, 48, 2.2);
+  },
+  dumbo() {
+    for (let i = 0; i < 6; i++) { const x = 30 + i * 8; ribbon(qP([x, 62], [x + (i - 2.5) * 3, 76], [x + (i - 2.5) * 5, 86], 6), 8, 4, '#ffb38a', 2); }
+    ell(18, 40, 12, 8, '#ff9a6a', 2.6, -0.4); ell(82, 40, 12, 8, '#ff9a6a', 2.6, 0.4);
+    const b = ell(50, 46, 30, 26, '#ffb38a');
+    clip(b, () => ell(44, 34, 12, 8, 'rgba(255,255,255,.35)', 0));
+    strokeP(b, 3.2);
+    eye(40, 50, 3.2); eye(60, 50, 3.2); smile(50, 58, 5, 3); blush(34, 58); blush(66, 58);
+  },
+  vampiresquid() {
+    const web = poly([[18, 56], [82, 56], [92, 90], [70, 82], [50, 94], [30, 82], [8, 90]], '#7a1a2a');
+    clip(web, () => { for (let i = 0; i < 6; i++) line([[50, 58], [10 + i * 16, 94]], 1.6, 'rgba(255,255,255,.25)'); });
+    strokeP(web, 3);
+    for (let i = 0; i < 6; i++) { const x = 16 + i * 14; poly([[x, 72], [x + 2, 64], [x + 4, 72]], '#fff', 1.2); }
+    ell(24, 24, 9, 6, '#7a1a2a', 2.4, -0.6); ell(76, 24, 9, 6, '#7a1a2a', 2.4, 0.6);
+    const b = poly([[50, 6], [70, 30], [72, 58], [28, 58], [30, 30]], '#9a2a3a');
+    strokeP(b, 3.2);
+    for (const x of [40, 60]) { ell(x, 42, 6, 6, '#7fd8f7', 2.2); dot(x, 42, 2.6); }
+  },
+  isopod() {
+    for (let i = 0; i < 7; i++) { line([[24 + i * 9, 72], [20 + i * 9, 84]], 2.4); }
+    line(qP([84, 46], [96, 34], [98, 22], 6), 2); line(qP([84, 50], [98, 50], [100, 40], 6), 2);
+    const b = ell(52, 56, 36, 20, '#b8a8c8');
+    clip(b, () => { for (let x = 24; x < 84; x += 8) line(qP([x, 36], [x + 3, 56], [x, 76], 6), 2, 'rgba(90,70,110,.55)'); ell(52, 46, 30, 6, 'rgba(255,255,255,.3)', 0); });
+    strokeP(b, 3.2);
+    poly([[18, 56], [8, 48], [8, 64]], '#a898b8', 2.4);
+    eye(80, 52, 2.6);
+  },
+  beluga() {
+    const w = '#f2f5f8';
+    poly([[18, 52], [4, 36], [8, 50], [2, 64]], w);
+    const b = poly([[12, 54], [28, 38], [54, 34], [74, 30], [92, 40], [96, 56], [84, 70], [56, 74], [26, 68]], w);
+    clip(b, () => ell(80, 34, 14, 10, '#ffffff', 0));
+    strokeP(b, 3.2);
+    eye(80, 48, 3); smile(88, 58, 6, 3); blush(76, 56);
+    poly([[50, 66], [42, 82], [58, 72]], w, 2.6);
+  },
+  thresher() { sharkArt({ body: '#7a8fa8', belly: '#eef3f7', longTail: true }); },
+  leopardseal() { sealArt({ body: '#7a828c', belly: '#c9d0d8', spots: 'rgba(30,35,40,.7)', teeth: true }); },
+  humpback() {
+    const k = '#3a4a6a';
+    poly([[18, 52], [2, 34], [8, 50], [2, 66]], k);
+    const b = poly([[12, 54], [30, 36], [62, 30], [86, 38], [96, 52], [86, 66], [56, 74], [26, 70]], k);
+    clip(b, () => { poly([[40, 60], [96, 54], [86, 70], [50, 80]], '#dfe6ee', 0); for (const y of [62, 66, 70]) line([[50, y], [92, y - 6]], 1.4, 'rgba(60,70,90,.5)'); });
+    strokeP(b, 3.2);
+    ribbon(qP([52, 64], [44, 82], [30, 94], 8), 10, 5, '#dfe6ee', 2.6);
+    for (const [x, y] of [[80, 34], [70, 32], [90, 42]]) dot(x, y, 1.8, '#dfe6ee');
+    eye(80, 48, 3); smile(88, 56, 5, 2.5);
+  },
+  spermwhale() {
+    const k = '#5a6470';
+    poly([[16, 56], [2, 40], [6, 54], [2, 70]], k);
+    const b = poly([[12, 58], [30, 44], [48, 34], [96, 32], [96, 66], [70, 70], [40, 72], [24, 68]], k);
+    clip(b, () => { for (const [x, y] of [[40, 50], [58, 44], [76, 48], [50, 60]]) line([[x, y], [x + 6, y + 2]], 1.4, 'rgba(255,255,255,.3)'); });
+    strokeP(b, 3.2);
+    line([[60, 70], [94, 66]], 2.6);
+    for (let x = 64; x < 92; x += 5) poly([[x, 68], [x + 2, 72], [x + 4, 68]], '#fff', 1);
+    eye(58, 56, 2.6);
+  },
+  lavafish() {
+    const g = c.createRadialGradient(52, 52, 10, 52, 52, 50); g.addColorStop(0, 'rgba(255,140,40,.5)'); g.addColorStop(1, 'rgba(255,140,40,0)');
+    c.fillStyle = g; c.fillRect(0, 0, 100, 100);
+    fish({ cx: 52, cy: 52, len: 82, h: 40, body: '#3a2424', belly: '#5a2a1a', fin: '#ff6a2a', squiggle: '#ff8a2a' });
+    sparkle(20, 22, 4.5, '#ffd84d'); sparkle(84, 80, 4, '#ff8a2a');
+  },
+  seaserpent() { serpentArt({ body: '#3fae7a', belly: '#c9f0d8', fin: '#2f7d5a' }); },
+  galaxyfish() {
+    fish({ cx: 52, cy: 52, len: 82, h: 40, body: '#2a1f5a', belly: '#4a2f8a', fin: '#7a5fe0', spots: '#ffffff', sparkle: true });
+    sparkle(30, 46, 3.2); sparkle(58, 60, 2.6);
+  },
+  dragonfish() {
+    for (const d of [-1, 1]) line(qP([76, 44], [80, 44 + d * 4], [88, 34 + d * 2], 5), 3, '#c9302c');
+    fish({ cx: 50, cy: 54, len: 86, h: 32, body: '#ffcf3f', belly: '#fff2a8', fin: '#e8574a', tail: '#e8574a', backWaves: '#e8a020', whiskers: true, sparkle: true });
+  },
+  leviathan() { serpentArt({ body: '#1f3a6a', belly: '#4a7fc9', fin: '#5ad4ff', glow: true }); },
+
   // ---------- bait ----------
   worm() { drawWorm('#ff9eb0', '#ff7f98'); },
   goldbait() { drawWorm('#ffd84d', '#e6b800'); sparkle(80, 20, 7); sparkle(18, 30, 5); sparkle(86, 66, 4); },
@@ -1063,6 +1321,7 @@ ART.clownfish = ART.tropical;
 ART.greatwhite = ART.shark;
 ART.seaturtle = ART.turtle;
 ART.bluewhale = ART.whale;
+ART.bottlenose = ART.dolphin;
 
 function drawWorm(col, seg) {
   const sp = wave(16, 70, 74, 52, 9, 1.4, 20);
@@ -1078,7 +1337,8 @@ function drawWorm(col, seg) {
 // wide (whale shark: flat mouth, no teeth), bigMouth (megalodon)
 function sharkArt(o) {
   const gr = o.body;
-  poly([[18, 50], [4, 28], [10, 50], [6, 72]], gr);
+  if (o.longTail) ribbon(qP([20, 48], [6, 34], [4, 2], 10), 10, 2, gr, 3);
+  else poly([[18, 50], [4, 28], [10, 50], [6, 72]], gr);
   poly([[40, 34], [52, 10], [62, 36]], gr);
   const b = poly([[14, 50], [30, 34], [60, 30], [84, 38], [96, 52], [84, 64], [56, 72], [30, 66]], gr);
   clip(b, () => {
@@ -1120,6 +1380,41 @@ function squidArt(col, spot) {
     c.fillStyle = g; c.fillRect(x - 11, 39, 22, 22);
     ell(x, 50, 7, 8, '#dffcff', 2.2); eye(x, 51, 3.6);
   }
+}
+
+// seal lying down. o: body, belly, spots, teeth (leopard seal grin)
+function sealArt(o) {
+  poly([[20, 66], [4, 56], [6, 80]], o.body, 2.6);
+  const b = poly([[16, 68], [30, 52], [56, 46], [70, 36], [84, 34], [94, 44], [92, 56], [76, 66], [50, 76], [26, 76]], o.body);
+  clip(b, () => {
+    ell(54, 76, 36, 10, o.belly, 0);
+    for (const [x, y] of [[34, 62], [48, 56], [60, 52], [42, 68], [66, 60], [76, 44]]) dot(x, y, 2.2, o.spots);
+  });
+  strokeP(b, 3.2);
+  ell(54, 74, 10, 5, o.body, 2.4, 0.5);
+  eye(84, 42, 3); dot(93, 48, 2.2);
+  for (const d of [-1, 1]) line([[90, 50], [98, 50 + d * 4]], 1.2);
+  if (o.teeth) { line(qP([82, 52], [88, 56], [93, 52], 6), 2.2); for (const x of [84, 88]) poly([[x, 53], [x + 1.5, 57], [x + 3, 53]], '#fff', 1); }
+  else smile(88, 52, 3, 2);
+}
+// sea serpent with humps out of the water. o: body, belly, fin, glow (leviathan)
+function serpentArt(o) {
+  line(wave(2, 84, 98, 84, 2, 3), 2.4, '#4aa3df');
+  const sp = wave(6, 80, 74, 34, 14, 1.6, 26);
+  for (let i = 2; i < sp.length - 3; i += 3) { const [x, y] = sp[i]; poly([[x - 3, y - 5], [x, y - 14], [x + 3, y - 5]], o.fin, 1.6); }
+  ribbon(sp, 8, 16, o.body);
+  ribbon(sp.map(([x, y]) => [x, y + 3]), 2, 4, o.belly, 0);
+  const [hx, hy] = sp[sp.length - 1];
+  poly([[hx - 4, hy - 6], [hx - 10, hy - 22], [hx + 2, hy - 8]], o.fin, 2); poly([[hx + 2, hy - 8], [hx + 2, hy - 24], [hx + 8, hy - 8]], o.fin, 2);
+  const h = poly([[hx - 8, hy - 6], [hx + 10, hy - 10], [hx + 24, hy - 2], [hx + 22, hy + 8], [hx, hy + 10]], o.body);
+  strokeP(h, 3);
+  for (const x of [hx + 12, hx + 16, hx + 20]) poly([[x, hy + 6], [x + 1.5, hy + 11], [x + 3, hy + 6]], '#fff', 1);
+  if (o.glow) {
+    const g = c.createRadialGradient(hx + 6, hy - 4, 0, hx + 6, hy - 4, 10); g.addColorStop(0, 'rgba(120,230,255,.9)'); g.addColorStop(1, 'rgba(120,230,255,0)');
+    c.fillStyle = g; c.fillRect(hx - 4, hy - 14, 20, 20);
+    ell(hx + 6, hy - 4, 3.5, 3, '#bdf6ff', 1.6); dot(hx + 6, hy - 4, 1.4);
+    sparkle(20, 20, 5, '#bdf6ff'); sparkle(90, 70, 4, '#bdf6ff');
+  } else eye(hx + 6, hy - 3, 2.6);
 }
 
 // ---------- caching + public API ----------
